@@ -91,10 +91,13 @@ def test_simple_possibility_pruner():
     for new, old in zip(p_grid, orig_grid):
         assert all(val_new <= val_old for val_new, val_old in zip(new, old))
 
+def test_copy_p_grid():
+    p_grid = sudoku.create_possibility_grid(TEST_SUDOKU)
+    new_grid = sudoku.copy_possibility_grid(p_grid)
 
-    print('\noriginal')
-    print(orig_grid[0])
+    p_grid[0] = False
 
-    print('\nnew')
-    print(p_grid[0])
-    assert False
+    assert new_grid[0]
+
+def test_solver():
+    sudoku.solve_sudoku(TEST_SUDOKU)

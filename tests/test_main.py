@@ -100,4 +100,9 @@ def test_copy_p_grid():
     assert new_grid[0]
 
 def test_solver():
-    sudoku.solve_sudoku(TEST_SUDOKU)
+    test_result = [1, 9, 7, 3, 4, 5, 8, 2, 6, 5, 2, 3, 9, 8, 6, 1, 4, 7, 6, 4, 8, 2, 7, 1, 5, 9, 3, 7, 5, 4, 1, 6, 9, 3, 8, 2, 9, 3, 6, 5, 2, 8, 7, 1, 4, 2, 8, 1, 7, 3, 4, 9, 6, 5, 8, 7, 2, 4, 9, 3, 6, 5, 1, 4, 6, 5, 8, 1, 7, 2, 3, 9, 3, 1, 9, 6, 5, 2, 4, 7, 8]
+    assert sudoku.solve_sudoku(TEST_SUDOKU) == test_result
+
+    empty_start = [0 for j in range(81)]
+    empty_result = [1, 2, 3, 4, 5, 6, 7, 8, 9, 4, 5, 6, 7, 8, 9, 1, 2, 3, 7, 8, 9, 1, 2, 3, 4, 5, 6, 2, 1, 4, 3, 6, 5, 8, 9, 7, 3, 6, 5, 8, 9, 7, 2, 1, 4, 8, 9, 7, 2, 1, 4, 3, 6, 5, 5, 3, 1, 6, 4, 2, 9, 7, 8, 6, 4, 2, 9, 7, 8, 5, 3, 1, 9, 7, 8, 5, 3, 1, 6, 4, 2]
+    assert sudoku.solve_sudoku(empty_start) == empty_result

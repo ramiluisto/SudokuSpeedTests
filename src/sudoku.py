@@ -10,6 +10,8 @@ def solve_sudoku(sudoku_list):
     p_grid = create_possibility_grid(sudoku_list)
     success_flag, res = recursive_solver(p_grid)
 
+    if not success_flag:
+        print('FAILURE')
 
     sudoku_list = reduce_from_p_grid(res)
 
@@ -17,10 +19,10 @@ def solve_sudoku(sudoku_list):
     return sudoku_list
 
 
-
 def reduce_from_p_grid(p_grid):
     sudoku_list = []
     for p in p_grid:
+        
         if 1 in p:
             sudoku_list.append(p.index(1)+1)
         else:
@@ -214,6 +216,7 @@ if __name__ == '__main__':
     res = solve_sudoku(TEST_SUDOKU)
     print('Out:\n')
     pprint_sudoku(res)
+    print(res)
 
     sudo_in = [0 for _ in range(81)]
     print('In:\n')
@@ -222,3 +225,37 @@ if __name__ == '__main__':
     print('Out:\n')
     pprint_sudoku(res)
 
+    print(res)
+
+    sudo_in = [0 for _ in range(81)]
+    sudo_in[0] = 5
+    sudo_in[8] = 5
+    print('In:\n')
+    pprint_sudoku(sudo_in)
+    res = solve_sudoku(sudo_in)
+    print('Out:\n')
+    pprint_sudoku(res)
+
+    print(res)
+
+    from tqdm import tqdm
+
+    with open('./data/minimal_lines.csv', 'r') as fp:
+        datalines = fp.readlines()
+
+    tally = 0
+    for line in tqdm(datalines):
+        unsolved, solved = line.split(',')
+        unsolved = unsolved.strip(' \n')
+        solved = solved.strip(' \n')
+
+        in_sudoku = [int(val) for val in unsolved]
+        result_sudoku = [int(val) for val in solved]
+
+        result = solve_sudoku(in_sudoku)
+        if result == result_sudoku:
+            tally += 1
+
+    print('\n\n')
+    print('Yht:', tally)
+    print('\n\n')

@@ -26,8 +26,8 @@ To choose a target, we're gonna look at a straightforward recursive Sudoku solve
 To put all to the same page with the terminology, a [sudoku](https://en.wikipedia.org/wiki/Sudoku)
 is a logical game where you have a 9x9 grid divided into 9 3x3 blocks:
 
-![Picture of a sudoku](./images/sudoku.svg)
-<img src="./images/sudoku.svg">
+![Picture of a sudoku](./images/Sudoku.svg)
+<img src="./images/Sudoku.svg">
 
 
 The rule of the game is to fill the grid with numbers 1-9 such that any row, column or block

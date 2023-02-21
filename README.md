@@ -37,6 +37,11 @@ a non-trivial task, though given starting configuration adding legal numbers alw
 makes it easier. (Removing them might not as multiple solutions might emerge by reducing
 restrictions.)
 
+For the system we'll handle data input and output as strings of numbers, i.e. a single
+sudoku will be an string of length 81, with each character one of the numbers 0-9. Here
+with a 0 we will mean that a cell is unfilled. The numbers in this string are taken to 
+be in such an order that they fill the standard 9x9 grid one by one, starting from top left
+and moving through the cells left to right, top to bottom.
 
 
 Pseudocode for the solver.
@@ -63,10 +68,7 @@ def recursive_solver(sudoku : ThreeDimensionalArray) -> bool:
     return False
 ```
 
-Here the `sudoku` is a three dimensional array, either a triply nested list for the naive 
-approach or a numpy array for the more delicate version. The idea is that for any given 
-sudoku grid, each of the 9*9 cells holds a list of booleans (or ones and zeroes) that represent
-what numbers are currently known to be possible in a given cell.
+
 
 
 

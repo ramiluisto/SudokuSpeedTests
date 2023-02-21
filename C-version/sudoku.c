@@ -142,26 +142,34 @@ int get_block_by_index(int index, char p_grid[SUDOKU_LIST_SIZE][SUDOKU_NUM_COUNT
 }
 
 void mask_p_grid_by_data(
+    char current_index,
     char p[], 
     char row[SUDOKU_NUM_COUNT][SUDOKU_NUM_COUNT], 
     char col[SUDOKU_NUM_COUNT][SUDOKU_NUM_COUNT], 
     char block[SUDOKU_NUM_COUNT][SUDOKU_NUM_COUNT]){
 
-        for(int i=0; i<9; i++){
+    for(int i=0; i<9; i++){
 
-            int col_idx, row_idx, block_idx;
-            col_idx = row_idx = block_idx = -2;
+        int col_idx, row_idx, block_idx;
+        col_idx = row_idx = block_idx = -2;
 
-            for(int j=0; j<9; j++){
-                if (row[i][j] == 1) row_idx = (row_idx == -2) ? j : -1;
-                if (col[i][j] == 1) col_idx = (col_idx == -2) ? j : -1;
-                if (block[i][j] == 1) block_idx = (block_idx == -2) ? j : -1;  
-            }
-
-            for 
-
-
+        for(int j=0; j<9; j++){
+            if (j == current_index) continue;
+            
+            if (row[i][j] == 1) row_idx = (row_idx == -2) ? j : -1;
+            if (col[i][j] == 1) col_idx = (col_idx == -2) ? j : -1;
+            if (block[i][j] == 1) block_idx = (block_idx == -2) ? j : -1;  
         }
+
+        char mask_indeces[] = {row_idx, col_idx, block_idx};
+        for(int k=0; k<3; k++) {
+            if (mask_indeces[k] >= 0) {
+                p[i] = 0;
+            }
+        }
+
+
+    }
 
         return;
     }

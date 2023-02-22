@@ -23,7 +23,7 @@ int main() {
     print_sudoku_string(TEST_SUDOKU_STRING);
 
     convert_sudoku_string_to_p_array(TEST_SUDOKU_STRING, sudoku_possibility_array);
-    //print_p_grid(sudoku_possibility_array);
+    print_p_grid(sudoku_possibility_array);
 
     char test_row[SUDOKU_NUM_COUNT][SUDOKU_NUM_COUNT] = {0};
 
@@ -155,8 +155,8 @@ void mask_p_grid_by_data(
 
         for(int j=0; j<9; j++){
             if (j == current_index) continue;
-            
-            if (row[i][j] == 1) row_idx = (row_idx == -2) ? j : -1;
+
+            if (row[i][j] == 1) row_idx = (row_idx == -2) ? j : -1; // put if inside the ternary?
             if (col[i][j] == 1) col_idx = (col_idx == -2) ? j : -1;
             if (block[i][j] == 1) block_idx = (block_idx == -2) ? j : -1;  
         }

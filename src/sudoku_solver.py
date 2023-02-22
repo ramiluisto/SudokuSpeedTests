@@ -68,7 +68,6 @@ def print_sudoku(sudoku):
 # The main recurser
 ################################################################
 
-GLOBAL_INDENT = 0
 def recursive_solver(sudoku) -> bool:
     changed = True
     while(changed):
@@ -260,3 +259,8 @@ def read_and_solve_sudoku_from_string(sudoku_string):
     result_string = p_grid_to_sudoku_string(sudoku)
 
     return result_string
+
+if __name__ == "__main__":
+    sudoku_str = "765082090913004080840030150209000546084369200006405000000040009090051024001890765"
+    sudoku = produce_p_grid_from_sudoku_string(sudoku_str)
+    print_sudoku(sudoku)  

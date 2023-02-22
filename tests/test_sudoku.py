@@ -264,3 +264,13 @@ def test_read_and_solve_sudoku_from_string(
         sudoku, solution = pair
         result = sudoku_solver.read_and_solve_sudoku_from_string(sudoku)
         assert result == solution
+
+def test_solver_with_1000_sudokus():
+    with open('./data/10k_sudokus.csv', 'r') as fp:
+        data = fp.readlines()
+        
+    for line in data[:1000]:
+        line = line.strip('\n ')
+        orig, solved = line.split(',')
+        result=sudoku_solver.read_and_solve_sudoku_from_string(orig)
+        assert result == solved

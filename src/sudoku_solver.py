@@ -260,27 +260,3 @@ def read_and_solve_sudoku_from_string(sudoku_string):
     result_string = p_grid_to_sudoku_string(sudoku)
 
     return result_string
-
-
-
-def speedtest():
-    from tqdm import tqdm
-    with open('./bigdata/minimal_lines.csv', 'r') as fp:
-        datalines = fp.readlines()
-
-    tally = 0
-    for line in tqdm(datalines[:100]):
-        unsolved, solved = line.split(',')
-        unsolved = unsolved.strip(' \n')
-        solved = solved.strip(' \n')
-
-        result = read_and_solve_sudoku_from_string(unsolved)
-        if result == solved:
-            tally += 1
-
-    print('\n\n')
-    print('Yht:', tally)
-    print('\n\n')  
-
-if __name__ == "__main__":
-    speedtest()

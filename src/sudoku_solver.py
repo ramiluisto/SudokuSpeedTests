@@ -17,6 +17,23 @@ def produce_p_grid_from_sudoku_string(input_sudoku : str):
 
     return p_grid
 
+def p_grid_to_sudoku_string(sudoku) -> str:
+    sudoku_list = []
+
+    for idx in range(81):
+        row_idx = idx//9
+        col_idx = idx%9    
+        if sum(sudoku[row_idx][col_idx]) == 1:
+            num = 1+sudoku[row_idx][col_idx].index(1)
+        else:
+            num = 0
+        sudoku_list.append(str(num))
+
+    sudoku_str = ''.join(sudoku_list)
+    
+    return sudoku_str
+
+
 
 def print_sudoku(sudoku):
     TOP_ROW_FORMAT = "╔═══════╤═══════╤═══════╗"
@@ -53,14 +70,15 @@ def recursive_solver(sudoku) -> bool:
     while(changed):
         changed = reduce_possibilities(sudoku)
 
-    if is_solved(sudoku):
+    cell_idx = first_unsolved_cell_index(sudoku)
+    if cell_idx == -1:
+        # If there is no unsolved cell, then the sudoku is complete.
         return True
 
-    cell_idx = first_unsolved_cell_index(sudoku)
     possibilities = get_cell_possibilities(cell_idx, sudoku)
-    for p in possibilities:
-        local_sudoku = sudoku.copy()
-        set_cell_of_sudoku(cell_idx, local_sudoku, p)
+    for fixed_number in possibilities:
+        local_sudoku = copy_sudoku(sudoku)
+        set_cell_of_sudoku(cell_idx, local_sudoku, fixed_number)
 
         result = recursive_solver(local_sudoku)
         if result:
@@ -94,7 +112,7 @@ def reduce_possibilities(sudoku) -> bool:
             if current != new_value:
                 changes = True
             new_possibilities.append(new_value)
-        
+
         sudoku[row_idx][col_idx] = new_possibilities
 
     return changes
@@ -127,8 +145,10 @@ def get_simple_mask(row_idx, col_idx, sudoku):
     col = get_sudoku_col(col_idx, sudoku)
     blo = get_sudoku_blo(9*row_idx + col_idx, sudoku)
 
-    row_mask = extract_exclusions(row_idx, row)
-    col_mask = extract_exclusions(col_idx, col)
+    # Note that here e.g. the within the row_mask the index of the current cell is given
+    # by col_idx, and vice versa.
+    row_mask = extract_exclusions(col_idx, row)
+    col_mask = extract_exclusions(row_idx, col)
 
     block_idx = 3*(row_idx%3) + (col_idx%3)
     block_mask = extract_exclusions(block_idx, blo)
@@ -151,34 +171,49 @@ def extract_exclusions(current_idx, possibilities):
     return exclusion_mask
 
 
+
 ################################################################
-# Solution checker
+# Recursive loop
 ################################################################
 
-def is_solved(sudoku):
-    return all(sum(sudoku[i][j]) == 1 for i,j in product(range(9), range(9)))
+def first_unsolved_cell_index(sudoku):
+    for idx in range(81):
+        row_idx = idx//9
+        col_idx = idx%9
+        if sum(sudoku[row_idx][col_idx]) > 1:
+            return idx
+
+    return -1
+
+def get_cell_possibilities(cell_idx, sudoku):
+    row_idx = cell_idx//9
+    col_idx = cell_idx%9
+
+    possibility_mask = sudoku[row_idx][col_idx]
+    possibilities = [idx + 1 for idx, value in enumerate(possibility_mask) if value == 1]
+
+    return possibilities
+
+
+def copy_sudoku(sudoku):
+    base_p = 9*[1]
+    p_grid = [[base_p.copy() for _ in range(9)] for j in range(9)]
+    for idx in range(81):
+        row_idx = idx//9
+        col_idx = idx%9
+        p_grid[row_idx][col_idx] = [value for value in sudoku[row_idx][col_idx]]
+
+    return p_grid
+
+
+def set_cell_of_sudoku(cell_idx, sudoku, fixed_number):
+    row_idx = cell_idx//9
+    col_idx = cell_idx%9
+
+    new_possibilities = [0]*9
+    new_possibilities[fixed_number - 1] = 1
+
+    sudoku[row_idx][col_idx] = new_possibilities
 
 
 
-
-if __name__ == "__main__":
-    sudoku_str = "765082090913004080840030150209000546084369200006405000000040009090051024001890765"
-    sudoku = produce_p_grid_from_sudoku_string(sudoku_str)
-    print_sudoku(sudoku)
-    print("\n")
-    print(reduce_possibilities(sudoku))
-    print_sudoku(sudoku)
-    print("\n")
-    print(reduce_possibilities(sudoku))
-    print_sudoku(sudoku)
-    print("\n")
-    print(reduce_possibilities(sudoku))
-    print_sudoku(sudoku)
-    print("\n")
-    print(reduce_possibilities(sudoku))
-    print_sudoku(sudoku)
-    print("\n")
-    print(reduce_possibilities(sudoku))
-    print_sudoku(sudoku)
-
-    print(produce_p_grid_from_sudoku_string("765182493913574682842936157239718546584369271176425938658247319397651824421893765"))

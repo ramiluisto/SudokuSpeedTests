@@ -143,8 +143,55 @@ def test_reduce_possibilities(simple_sudoku_p_grid):
     assert second_change
 
     third_change = sudoku_solver.reduce_possibilities(simple_sudoku_p_grid)
-    assert not third_change
+    assert third_change
 
-def test_is_solved(simple_sudoku_p_grid, simple_sudoku_p_grid_solved):
-    assert not sudoku_solver.is_solved(simple_sudoku_p_grid)
-    assert sudoku_solver.is_solved(simple_sudoku_p_grid_solved)
+    fourth_change = sudoku_solver.reduce_possibilities(simple_sudoku_p_grid)
+    assert not fourth_change
+
+def test_first_unsolved_cell_index(simple_sudoku_p_grid, simple_sudoku_p_grid_solved):
+    assert sudoku_solver.first_unsolved_cell_index(simple_sudoku_p_grid) == 3
+    assert sudoku_solver.first_unsolved_cell_index(simple_sudoku_p_grid_solved) == -1
+
+
+def test_get_cell_possibilities(simple_sudoku_p_grid):
+    assert sudoku_solver.get_cell_possibilities(0, simple_sudoku_p_grid) == [7]
+    assert sudoku_solver.get_cell_possibilities(3, simple_sudoku_p_grid) == list(range(1,10))
+    one_change = sudoku_solver.reduce_possibilities(simple_sudoku_p_grid)
+    assert sudoku_solver.get_cell_possibilities(3, simple_sudoku_p_grid) == [1]
+    assert sudoku_solver.get_cell_possibilities(7, simple_sudoku_p_grid) == [9]
+    assert sudoku_solver.get_cell_possibilities(12, simple_sudoku_p_grid) == [5, 6, 7]
+
+
+def test_copy_sudoku(simple_sudoku_p_grid):
+    copy_grid = sudoku_solver.copy_sudoku(simple_sudoku_p_grid)
+
+    assert copy_grid == simple_sudoku_p_grid
+    assert id(copy_grid) != id(simple_sudoku_p_grid)
+    
+    simple_sudoku_p_grid[0][0][0] = -1
+    assert copy_grid[0][0][0] != -1
+
+def test_set_cell_of_sudoku(simple_sudoku_p_grid):
+
+    for j in range(1,10):
+        sudoku_solver.set_cell_of_sudoku(0, simple_sudoku_p_grid, j)
+        for val in range(9):
+            if val == j-1:
+                assert simple_sudoku_p_grid[0][0][val] == 1
+            else:
+                assert simple_sudoku_p_grid[0][0][val] == 0
+
+    for j in range(1,10):
+        sudoku_solver.set_cell_of_sudoku(77, simple_sudoku_p_grid, j)
+        for val in range(9):
+            if val == j-1:
+                assert simple_sudoku_p_grid[8][5][val] == 1
+            else:
+                assert simple_sudoku_p_grid[8][5][val] == 0
+
+def test_recursive_solver(simple_sudoku_p_grid):
+    assert sudoku_solver.recursive_solver(simple_sudoku_p_grid)
+    assert sudoku_solver.first_unsolved_cell_index(simple_sudoku_p_grid) == -1
+
+def test_p_grid_to_sudoku_string(simple_sudoku_string, simple_sudoku_p_grid):
+    assert simple_sudoku_string == sudoku_solver.p_grid_to_sudoku_string(simple_sudoku_p_grid)

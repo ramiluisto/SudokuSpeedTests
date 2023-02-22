@@ -64,11 +64,17 @@ def print_sudoku(sudoku):
     print(BOT_ROW_FORMAT)
 
 
-def recursive_solver(sudoku) -> bool:
+################################################################
+# The main recurser
+################################################################
 
+GLOBAL_INDENT = 0
+def recursive_solver(sudoku) -> bool:
     changed = True
     while(changed):
         changed = reduce_possibilities(sudoku)
+        if not still_solvable(sudoku):
+            return False
 
     cell_idx = first_unsolved_cell_index(sudoku)
     if cell_idx == -1:
@@ -77,13 +83,13 @@ def recursive_solver(sudoku) -> bool:
 
     possibilities = get_cell_possibilities(cell_idx, sudoku)
     for fixed_number in possibilities:
-        local_sudoku = copy_sudoku(sudoku)
+        local_sudoku = create_copy_of_sudoku(sudoku)
         set_cell_of_sudoku(cell_idx, local_sudoku, fixed_number)
-
         result = recursive_solver(local_sudoku)
         if result:
+            paste_local_sudoku_to_original(local_sudoku, sudoku)
             return True
-
+  
     return False
 
 
@@ -171,6 +177,35 @@ def extract_exclusions(current_idx, possibilities):
     return exclusion_mask
 
 
+def still_solvable(sudoku):
+
+    for j in range(9):
+        row = get_sudoku_row(j, sudoku)
+        collision = collision_in_collection(row)
+        if collision:
+            return False
+
+        col = get_sudoku_col(j, sudoku)
+        collision = collision_in_collection(col)
+        if collision:
+            return False
+
+    for j in [0,3,6,27,30,33,54,57,60]:
+        blo = get_sudoku_blo(j, sudoku)
+        collision = collision_in_collection(blo)
+        if collision:
+            return False
+
+    return all(sum(sudoku[i//9][i%9]) >= 1 for i in range(81))
+
+def collision_in_collection(collection):
+    numbers_in_collection = []
+    for possibilities in collection:
+        if sum(possibilities) == 1:
+            num = 1+possibilities.index(1)
+            numbers_in_collection.append(num)
+
+    return len(set(numbers_in_collection)) < len(numbers_in_collection)
 
 ################################################################
 # Recursive loop
@@ -195,7 +230,7 @@ def get_cell_possibilities(cell_idx, sudoku):
     return possibilities
 
 
-def copy_sudoku(sudoku):
+def create_copy_of_sudoku(sudoku):
     base_p = 9*[1]
     p_grid = [[base_p.copy() for _ in range(9)] for j in range(9)]
     for idx in range(81):
@@ -204,6 +239,10 @@ def copy_sudoku(sudoku):
         p_grid[row_idx][col_idx] = [value for value in sudoku[row_idx][col_idx]]
 
     return p_grid
+
+def paste_local_sudoku_to_original(local_sudoku, sudoku):
+    for idx in range(81):
+        sudoku[idx//9][idx%9] = [ local_sudoku[idx//9][idx%9][j] for j in range(9)]
 
 
 def set_cell_of_sudoku(cell_idx, sudoku, fixed_number):
@@ -215,5 +254,33 @@ def set_cell_of_sudoku(cell_idx, sudoku, fixed_number):
 
     sudoku[row_idx][col_idx] = new_possibilities
 
+def read_and_solve_sudoku_from_string(sudoku_string):
+    sudoku = produce_p_grid_from_sudoku_string(sudoku_string)
+    success = recursive_solver(sudoku)
+    result_string = p_grid_to_sudoku_string(sudoku)
+
+    return result_string
 
 
+
+def speedtest():
+    from tqdm import tqdm
+    with open('./bigdata/minimal_lines.csv', 'r') as fp:
+        datalines = fp.readlines()
+
+    tally = 0
+    for line in tqdm(datalines[:100]):
+        unsolved, solved = line.split(',')
+        unsolved = unsolved.strip(' \n')
+        solved = solved.strip(' \n')
+
+        result = read_and_solve_sudoku_from_string(unsolved)
+        if result == solved:
+            tally += 1
+
+    print('\n\n')
+    print('Yht:', tally)
+    print('\n\n')  
+
+if __name__ == "__main__":
+    speedtest()

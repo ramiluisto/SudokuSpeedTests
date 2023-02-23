@@ -1,5 +1,8 @@
 # My personal speed analysis repo
 
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
+
 The goal of this repo is to study the speed increases that can be achived
 from going first from 'naive Python' to 'numpy Python', and then to either
 building specific crucial parts as C-libraries, or to building the whole system

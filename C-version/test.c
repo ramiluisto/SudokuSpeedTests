@@ -3,8 +3,10 @@
 typedef char mygrid[3][3][2];
 typedef char** subthing;
 
-subthing subfinder(mygrid p_grid, int indeces[3][2]) {
-    static char* result_array[3];
+typedef char* row[3];
+
+row* subfinder(mygrid p_grid, int indeces[3][2]) {
+    static row result_array;
     int x, y;
 
     for(int i=0; i<3; i++) {
@@ -15,7 +17,7 @@ subthing subfinder(mygrid p_grid, int indeces[3][2]) {
         result_array[i] = new;
     }
 
-    return result_array;
+    return &result_array;
 }
 
 int main() {
@@ -27,8 +29,17 @@ int main() {
     printf("Original center is (%d, %d).\n", example_grid[1][1][0], example_grid[1][1][1]);
 
     int diag_indeces[3][2] = {{0,0}, {1,1}, {2,2}};
-    //subthing diagonal = subfinder(example_grid, diag_indeces);
+    void* diagonal = subfinder(example_grid, diag_indeces);
+    printf("Diagonal is        (%d, %d).\n", diagonal[1][0], diagonal[1][1]);
 
+    example_grid[1][1][0] = 7;
+    example_grid[1][1][1] = 8;
+    printf("Original center is (%d, %d).\n", example_grid[1][1][0], example_grid[1][1][1]);
+    printf("Diagonal is        (%d, %d).\n", diagonal[1][0], diagonal[1][1]);
+
+    diagonal[1][0] = 0;
+    printf("Original center is (%d, %d).\n", example_grid[1][1][0], example_grid[1][1][1]);
+    printf("Diagonal is        (%d, %d).\n", diagonal[1][0], diagonal[1][1]);
 }
 
 

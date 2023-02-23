@@ -10,27 +10,47 @@
 #define BOT_ROW_FORMAT "╚═══════╧═══════╧═══════╝\n"
 #define ROW_FORMAT "║ %c %c %c │ %c %c %c │ %c %c %c ║\n"
 
-char TEST_SUDOKU_STRING[] = "765082090913004080840030150209000546084369200006405000000040009090051024001890765";
+
+/*This type defines the standard format
+that we'll use to handle sudokus. For each cell in the sudoku, we have 
+an array of numbers 0 or 1.*/
+typedef char p_grid[SUDO_X][SUDO_Y][P_RANGE];
+typedef char** sub_component;
 
 
-
-
-void convert_sudoku_string_to_p_array(char *raw, char sudoku[SUDO_X][SUDO_Y][P_RANGE]){
+void convert_sudoku_string_to_p_grid(char *raw, p_grid sudoku){
     /*This function is essentially defining the standard format
     that we'll use to handle sudokus. For each cell in the sudoku, we have 
     an array of numbers 0 or 1.*/
+
     for(int i = 0 ; *raw != '\0' ; raw++){
-        if (*raw != '0') {
-            sudoku[i/9][i%9][*raw - '0' -1] = 1;
-        }
-        else {
-            for(int j=0; j<9; j++) {
-                sudoku[i/9][i%9][j] = 1;
-            }
-        }
+        for(int j=0; j<9; j++) sudoku[i/9][i%9][j] = 0;       // Initialize so that nothing is possible.
+        if (*raw != '0') sudoku[i/9][i%9][*raw - '0' -1] = 1; // Non-empty cells have just one possibility.
+        else for(int j=0; j<9; j++) sudoku[i/9][i%9][j] = 1;  // For empty cells everything is possible.
         i++;
     }
 }
+
+sub_component get_row(char row_idx, p_grid sudoku) {
+    static char* row[9];
+    for(int i=0; i<9; i++) row[i] = sudoku[row_idx][i];
+    return row;
+}
+
+sub_component get_col(char col_idx, p_grid sudoku) {
+    static char* col[9];
+    for(int i=0; i<9; i++) col[i] = sudoku[i][col_idx];
+    return col;
+}
+
+sub_component get_block(char total_idx, p_grid sudoku) {
+    static char* block[9];
+
+    for(int i=0; i<9; i++) row[i] = sudoku[row_idx][i];
+    
+    return block;
+}
+
 
 /*
 bool recursive_solver(char sudoku[SUDO_X][SUDO_Y][P_RANGE]){
@@ -63,7 +83,11 @@ bool recursive_solver(char sudoku[SUDO_X][SUDO_Y][P_RANGE]){
 }*/
 
 
-void print_sudoku(char sudoku[SUDO_X][SUDO_Y][P_RANGE]) {
+
+
+
+
+void print_sudoku(p_grid sudoku) {
     char sns[SUDOKU_LIST_LENGTH] = {0};
 
     for(int i=0; i<SUDOKU_LIST_LENGTH; i++) {
@@ -101,9 +125,25 @@ void print_sudoku(char sudoku[SUDO_X][SUDO_Y][P_RANGE]) {
 }
 
 int main() {
+
+    char TEST_SUDOKU_STRING[] = "765082090913004080840030150209000546084369200006405000000040009090051024001890765";
+    char NULL_SUDOKU_STRING[] = "000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+    p_grid sudoku = {0};
+
     printf("%s\n", TEST_SUDOKU_STRING);
-    char sudoku[SUDO_X][SUDO_Y][P_RANGE] = {0};
-    convert_sudoku_string_to_p_array(TEST_SUDOKU_STRING, sudoku);
+    convert_sudoku_string_to_p_grid(TEST_SUDOKU_STRING, sudoku);
     print_sudoku(sudoku);
 
+    //printf("%s\n", TEST_SUDOKU_STRING);
+    //convert_sudoku_string_to_p_grid(NULL_SUDOKU_STRING, sudoku);
+    //print_sudoku(sudoku);
+
+    printf("Row contents:\n");
+    sub_component test_row = get_row(0, sudoku);
+    for(int i=0; i<9; i++){
+        printf("%d| ", i+1);
+        for(int j=0; j<9; j++) printf("%d ", test_row[i][j]);
+        printf("\n");
+    }
+    printf("\n");
 }

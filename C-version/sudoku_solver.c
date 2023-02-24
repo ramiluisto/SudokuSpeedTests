@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdbool.h> 
+
 
 // More descriptive dimension names.
 #define SUDO_X 9
@@ -13,11 +15,17 @@
 #define ROW_FORMAT "║ %c %c %c │ %c %c %c │ %c %c %c ║\n"
 
 
-/*This p_grid type defines the standard format
-that we'll use to handle sudokus. For each cell in the sudoku, we have 
-an array of 9 numbers of either 0 or 1. These should be thought
-as booleans that represent if a given number 1-9 is a possible value
-for that cell.*/
+/* The following p_grid ('possibility grid') type defines the standard format
+ * that we'll use to handle sudokus. For each cell in the 9x9 sudoku, we have 
+ * a boolean array of length 9. We call this array the p_array
+ * ('possibility array') and it represents which of the numbers 1-9
+ * are still possible for the given cell. E.g. if for a sudoku of type
+ * p_grid we have that on the cell at (2,4) only the numbers 1, 3 or 9 
+ * are possible, then 
+ * sudoku[2][4] = {1, 0, 1, 0, 0, 0, 0, 0, 1}.
+ * Note that with standard indexing, number n corresponds to index position
+ * n-1.
+ */
 typedef char p_grid[SUDO_X][SUDO_Y][P_RANGE];
 
 /*The sub_component type will always point to a length 9 array of pointers. 
@@ -56,13 +64,15 @@ sub_component get_block(char total_idx, p_grid sudoku) {
     int B_row, B_col, topleft, block_index;
 
     B_row = total_idx/27;        
-    B_col = (total_idx/3)%3;      
-    topleft = 27*B_row + 3*B_col; // The cell index of the cell in the top left corner of the block.
-    static char shift_array[] = { 0, 1, 2, 9, 10, 11, 18, 19, 20 };
+    B_col = (total_idx/3)%3;
+
+    // The cell index of the cell in the top left corner of the block.
+    topleft = 27*B_row + 3*B_col;
     // Indeces of the block will be "topleft + shift_array".
+    static char block_shift_array[] = { 0, 1, 2, 9, 10, 11, 18, 19, 20 };
     
     for(int i=0; i<9; i++){
-        block_index = topleft+shift_array[i];
+        block_index = topleft+block_shift_array[i];
         block[i] = sudoku[block_index/9][block_index%9];
     }
 
@@ -71,6 +81,9 @@ sub_component get_block(char total_idx, p_grid sudoku) {
 }
 
 char p_array_interpreter(char p_array[9]) {
+    /* This function will take in a p_array and return
+    either the unique possible number 1-9 that it can be or
+    0 if there are more or less than 1 possibilities.*/
     int num_idx=0, sum=0;
     char value;
     for(int p_idx=0; p_idx < P_RANGE; p_idx++) {
@@ -84,44 +97,102 @@ char p_array_interpreter(char p_array[9]) {
     return num_idx;
 }
 
-int check_collisions(sub_component sub) {
-    char hits[9] = {0};
+
+
+bool check_collisions(sub_component sub) {
+    char hits[10] = {0};
 
     for(int idx=0; idx<9; idx++) {
-
-        //sub[idx]
+        char cell_number = p_array_interpreter(sub[idx]);
+        hits[cell_number] += 1;
     }
 
+    for(int i=1; i<10; i++) if (hits[i] > 1) return true;
 
-    for(int i=0; i<9; i++) if (hits[i] > 1) return 0;
-
-    return 1;
+    return false;
 }
 
-int still_solvable(p_grid sudoku) {
+bool still_solvable(p_grid sudoku) {
+    static char top_left_indeces_of_blocks[9] = {0, 3, 6, 27, 30, 33, 54, 57, 60};
 
     // Check rows for collisions.
     for(int row_idx=0; row_idx<SUDO_Y; row_idx++){
         sub_component row = get_row(row_idx, sudoku);
+        if (check_collisions(row)) return false;
+    }
 
+    // Check cols for collisions.
+    for(int col_idx=0; col_idx<SUDO_X; col_idx++){
+        sub_component row = get_col(col_idx, sudoku);
+        if (check_collisions(row)) return false;
+    }
+
+    // Check blocks for collisions.
+    for(int idx=0; idx<9; idx++){
+        char block_idx = top_left_indeces_of_blocks[idx];
+        sub_component block = get_block(block_idx, sudoku);
+        if (check_collisions(block)) return false;
     }
 
     // Check if any cell has no possibilities left.
     for(int idx=0; idx<SUDOKU_LIST_LENGTH; idx++) {
         int sum = 0;
-        for(int i=0; i<P_RANGE; i++) sum += sudoku[i/9][i%9][i];
-        if (sum == 0) return 0;
+        for(int i=0; i<P_RANGE; i++) sum += sudoku[idx/9][idx%9][i];
+        if (sum == 0) return false;
     }
 
-
-    return 0;
+    return true;
 }
 
-int reduce_possibilities(p_grid sudoku) {
-    return 0;
+void get_single_exclusion_data(char exclusion_counts[9], char ignore_idx, sub_component sub){
+    for(int i=0; i<P_RANGE; i++) {
+        if (i == ignore_idx) continue;
+        char value = p_array_interpreter(sub[i]);
+        if (value != 0) exclusion_counts[value-1] += 1;
+    }
+}
+
+void get_total_exclusions(char values_to_exclude[9], char cell_idx, p_grid sudoku){
+    char exclusion_counts[9] = {0};
+    sub_component sub;
+
+    sub = get_row(cell_idx/9, sudoku);
+    get_single_exclusion_data(exclusion_counts, cell_idx%9, sub);
+
+    sub = get_col(cell_idx%9, sudoku);
+    get_single_exclusion_data(exclusion_counts, cell_idx/9, sub);
+
+    sub = get_block(cell_idx, sudoku);
+    // The following index gets the "relative index" of the cell in the block
+    // it belongs to. E.g. cell 17 is at coordinates (2, 8) in the total sudoku,
+    // belonging to the rightmost block in the first row of blocks. Inside that 
+    // block it is the rightmost one of the middle row, and it's index there is 
+    // thus 5.
+    char block_exclusion_index =  3*((cell_idx/9) % 3) + ((cell_idx%9) % 3);
+    get_single_exclusion_data(exclusion_counts, cell_idx%9, sub);
+
+    
+
+}
+
+
+bool reduce_possibilities(p_grid sudoku) {
+    bool changes = false;
+
+    for(int cell_idx; cell_idx<SUDOKU_LIST_LENGTH; cell_idx++){
+        // If the cell value is already known, it will not change.
+        if (p_array_interpreter(sudoku[cell_idx/9][cell_idx%9])) continue;
+        
+        char values_to_exclude[9] = {0};
+        get_total_exclusions(values_to_exclude, cell_idx, sudoku);
+
+    }
+
+    return changes;
 }
 
 char first_unsolved_cell_index(p_grid sudoku) {
+
 
 }
 
@@ -134,19 +205,22 @@ void copy_first_sudoku_contents_to_second(p_grid sudoku_in, p_grid sudoku_out) {
 }
 
 void set_cell_of_sudoku(char cell_index, p_grid sudoku, char new_value) {
-
+    for(int i=0; i<P_RANGE; i++) {
+        sudoku[cell_index/9][cell_index%9][i] = (new_value == 0) ? 1 : 0;
+    }
+    if (new_value != 0) sudoku[cell_index/9][cell_index%9][new_value-1] = 1;    
 }
 
 
-int recursive_solver(p_grid sudoku){
+bool recursive_solver(p_grid sudoku){
     // This is the main recursive loop.
     do
     {
-        if (! still_solvable(sudoku)) return 0;
+        if (! still_solvable(sudoku)) return false;
     } while (reduce_possibilities(sudoku));
 
     char cell_idx = first_unsolved_cell_index(sudoku);
-    if (cell_idx == -1) return 1;
+    if (cell_idx == -1) return true;
 
     char possibilities[P_RANGE];
     get_cell_possibilities(cell_idx, sudoku, possibilities);
@@ -157,14 +231,14 @@ int recursive_solver(p_grid sudoku){
         char local_sudoku[SUDO_X][SUDO_Y][P_RANGE] = {0};
         copy_first_sudoku_contents_to_second(sudoku, local_sudoku);
         set_cell_of_sudoku(cell_idx, local_sudoku, fixed_number);
-        int result = recursive_solver(local_sudoku);
+        bool result = recursive_solver(local_sudoku);
         if (result) {
             copy_first_sudoku_contents_to_second(local_sudoku, sudoku);
-            return 1;
+            return true;
         }
     }
 
-    return 0;
+    return false;
 
 }
 
@@ -212,8 +286,9 @@ void p_array_pretty_print(sub_component sub){
     printf("\n");
 }
 
-void run_tests() {
 
+
+void run_generation_and_sub_access_tests() {
     char TEST_SUDOKU_STRING[] = "765082090913004080840030150209000546084369200006405000000040009090051024001890765";
     char NULL_SUDOKU_STRING[] = "000000000000000000000000000000000000000000000000000000000000000000000000000000000";
     p_grid sudoku = {0};
@@ -226,36 +301,74 @@ void run_tests() {
     //convert_sudoku_string_to_p_grid(NULL_SUDOKU_STRING, sudoku);
     //print_sudoku(sudoku);
 
-    printf("Row 4 contents:");
+    printf("Row 4 contents:        ");
     sub_component test_row = get_row(4, sudoku);
     p_array_pretty_print(test_row);
-    for(int i=0; i<9; i++){
-        printf("%d| ", i+1);
-        for(int j=0; j<9; j++) printf("%d ", test_row[i][j]);
-        printf("\n");
-    }
-    printf("\n");
 
-    printf("Col 5 contents:");
+    printf("Col 5 contents:        ");
     sub_component test_col = get_col(5, sudoku);
     p_array_pretty_print(test_col);
-    for(int i=0; i<9; i++){
+    /*for(int i=0; i<9; i++){
         printf("%d| ", i+1);
         for(int j=0; j<9; j++) printf("%d ", test_col[i][j]);
         printf("\n");
     }
-    printf("\n");
+    printf("\n");*/
 
-    printf("Block 8 contents:");
+    printf("Block 8 contents:      ");
     sub_component test_block = get_block(80, sudoku);
     p_array_pretty_print(test_block);
-    for(int i=0; i<9; i++){
-        printf("%d| ", i+1);
-        for(int j=0; j<9; j++) printf("%d ", test_block[i][j]);
-        printf("\n");
-    }
-    printf("\n");
+
 }
+
+void run_solvability_and_access_tests() {
+    char TEST_SUDOKU_STRING[] = "765082090913004080840030150209000546084369200006405000000040009090051024001890765";
+    char NULL_SUDOKU_STRING[] = "000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+    p_grid sudoku = {0};
+
+    printf("%s\n", TEST_SUDOKU_STRING);
+    convert_sudoku_string_to_p_grid(TEST_SUDOKU_STRING, sudoku);
+    print_sudoku(sudoku);
+
+    // Test positive solvability
+    if (still_solvable(sudoku)) printf("This is solvable.\n\n");
+
+    // Test row collision detection
+    set_cell_of_sudoku(6, sudoku, 7);
+    print_sudoku(sudoku);
+    if (still_solvable(sudoku)) printf("This is solvable.\n\n");
+    else printf("This is NOT solvable.\n\n");
+
+    // Test col collision detection
+    convert_sudoku_string_to_p_grid(NULL_SUDOKU_STRING, sudoku);
+    set_cell_of_sudoku(6, sudoku, 5);
+    set_cell_of_sudoku(33, sudoku, 5);
+    print_sudoku(sudoku);
+    if (still_solvable(sudoku)) printf("This is solvable.\n\n");
+    else printf("This is NOT solvable.\n\n");
+
+    // Test block collision detection
+    convert_sudoku_string_to_p_grid(NULL_SUDOKU_STRING, sudoku);
+    set_cell_of_sudoku(60, sudoku, 8);
+    set_cell_of_sudoku(80, sudoku, 8);
+    print_sudoku(sudoku);
+    if (still_solvable(sudoku)) printf("This is solvable.\n\n");
+    else printf("This is NOT solvable.\n\n");
+
+    // Test zero possibility detection
+    convert_sudoku_string_to_p_grid(TEST_SUDOKU_STRING, sudoku);
+    for(int i=0; i<9; i++) sudoku[0][0][i] = 0;
+    print_sudoku(sudoku);
+    if (still_solvable(sudoku)) printf("This is solvable.\n\n");
+    else printf("This is NOT solvable.\n\n");
+}
+
+void run_tests() {
+    run_generation_and_sub_access_tests();
+    run_solvability_and_access_tests();
+
+}
+
 
 int main() {
     run_tests();

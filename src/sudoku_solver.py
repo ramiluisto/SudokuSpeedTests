@@ -281,6 +281,14 @@ def read_and_solve_sudoku_from_string(sudoku_string):
 
 
 if __name__ == "__main__":
-    sudoku_str = "765082090913004080840030150209000546084369200006405000000040009090051024001890765"
-    sudoku = produce_p_grid_from_sudoku_string(sudoku_str)
-    print_sudoku(sudoku)
+    #sudoku_str = "765082090913004080840030150209000546084369200006405000000040009090051024001890765"
+    #sudoku = produce_p_grid_from_sudoku_string(sudoku_str)
+    #print_sudoku(sudoku)
+    with open('./data/10k_sudokus.csv', 'r') as fp:
+        data = fp.readlines()
+    from tqdm import tqdm
+    for line in tqdm(data):
+        sudoku_in = line.split(',')[0]
+        sudoku = produce_p_grid_from_sudoku_string(sudoku_in)
+        recursive_solver(sudoku)
+

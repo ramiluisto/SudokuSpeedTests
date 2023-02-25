@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include <stdbool.h> 
+#include <stdlib.h>
+#include <string.h>
+
 
 
 // More descriptive dimension names.
@@ -205,7 +208,7 @@ bool reduce_possibilities(p_grid sudoku) {
         char values_to_exclude[9] = {0};
         get_total_exclusions(values_to_exclude, cell_idx, sudoku);
         //printf("Exclusion array is: ");
-        for(int j=0; j<P_RANGE; j++) printf("%d%s", values_to_exclude[j], (j==8) ? "\n" : " ");
+        //for(int j=0; j<P_RANGE; j++) printf("%d%s", values_to_exclude[j], (j==8) ? "\n" : " ");
         for(int i=0; i<P_RANGE; i++){
             bool current_possibility = sudoku[cell_idx/9][cell_idx%9][i];
             bool exclude_possibility = values_to_exclude[i];
@@ -219,16 +222,26 @@ bool reduce_possibilities(p_grid sudoku) {
 }
 
 char first_unsolved_cell_index(p_grid sudoku) {
-
-
+    for(int cell_idx=0; cell_idx<SUDOKU_LIST_LENGTH; cell_idx++) {
+        char num_value = p_array_interpreter(sudoku[cell_idx/9][cell_idx%9]);
+        if (num_value==0) return cell_idx;
+    }
+    return -1;
 }
 
 void get_cell_possibilities(char cell_index, p_grid sudoku, char possibilities[P_RANGE]) {
-
+    for(int i=0; i<P_RANGE; i++){
+        char p = sudoku[cell_index/9][cell_index%9][i];
+        possibilities[i] = (p > 0) ? i+1 : 0;
+    }
 }
 
 void copy_first_sudoku_contents_to_second(p_grid sudoku_in, p_grid sudoku_out) {
-
+    for(int cell_index=0; cell_index<SUDOKU_LIST_LENGTH; cell_index++){
+        for(int j=0; j<P_RANGE; j++) {
+            sudoku_out[cell_index/9][cell_index%9][j] = sudoku_in[cell_index/9][cell_index%9][j];
+        }
+    }
 }
 
 void set_cell_of_sudoku(char cell_index, p_grid sudoku, char new_value) {
@@ -238,8 +251,10 @@ void set_cell_of_sudoku(char cell_index, p_grid sudoku, char new_value) {
     if (new_value != 0) sudoku[cell_index/9][cell_index%9][new_value-1] = 1;    
 }
 
-
+int recursion_depth = 0;
 bool recursive_solver(p_grid sudoku){
+    recursion_depth++;
+    //printf("Recursing at depth %3d.", recursion_depth);
     // This is the main recursive loop.
     do
     {
@@ -247,9 +262,12 @@ bool recursive_solver(p_grid sudoku){
     } while (reduce_possibilities(sudoku));
 
     char cell_idx = first_unsolved_cell_index(sudoku);
-    if (cell_idx == -1) return true;
+    if (cell_idx == -1) {
+        recursion_depth--;
+        return true;
+    }
 
-    char possibilities[P_RANGE];
+    char possibilities[P_RANGE] = {0};
     get_cell_possibilities(cell_idx, sudoku, possibilities);
     for(int index = 0; index < P_RANGE; index++) {
         char fixed_number = possibilities[index];
@@ -261,10 +279,11 @@ bool recursive_solver(p_grid sudoku){
         bool result = recursive_solver(local_sudoku);
         if (result) {
             copy_first_sudoku_contents_to_second(local_sudoku, sudoku);
+            recursion_depth--;
             return true;
         }
     }
-
+    recursion_depth--;
     return false;
 
 }
@@ -437,8 +456,6 @@ void run_possibility_reduction_tests(){
     for(int j=0; j<P_RANGE; j++) printf("%d%s", values_to_exclude[j], (j==8) ? "\n" : " ");
     
 
-    
-    printf("%s\n", TEST_SUDOKU_STRING);
     convert_sudoku_string_to_p_grid(TEST_SUDOKU_STRING, sudoku);
     print_sudoku(sudoku);
     bool changes = false;
@@ -449,10 +466,117 @@ void run_possibility_reduction_tests(){
     
 }
 
+void run_recursion_tools_tests(){
+    printf("\n<<<< Recursion tools Tests >>>>\n");
+    char TEST_SUDOKU_STRING[] = "765082090913004080840030150209000546084369200006405000000040009090051024001890765";
+    p_grid sudoku = {0};
+    convert_sudoku_string_to_p_grid(TEST_SUDOKU_STRING, sudoku);
+
+    char first = first_unsolved_cell_index(sudoku);
+    print_sudoku(sudoku);
+    printf("First unsolved idx: %d.\n", first_unsolved_cell_index(sudoku));
+
+    reduce_possibilities(sudoku);
+    print_sudoku(sudoku);
+    printf("First unsolved idx: %d.\n", first_unsolved_cell_index(sudoku));
+
+    while(reduce_possibilities(sudoku));
+    print_sudoku(sudoku);
+    printf("First unsolved idx: %d.\n", first_unsolved_cell_index(sudoku));
+
+    printf("\n");
+    convert_sudoku_string_to_p_grid(TEST_SUDOKU_STRING, sudoku);
+    reduce_possibilities(sudoku);
+    print_sudoku(sudoku);
+    char cell_index = 43;
+    char ps[9] = {0};
+    get_cell_possibilities(cell_index, sudoku, ps);
+    printf("\nPossibilities at cell index %2d are: ", cell_index);
+    for(int j=0; j<9; j++) printf("%d%s", ps[j], (j==8) ? "\n" : " ");
+
+    printf("\n");
+    p_grid sudoku_1 = {0};
+    p_grid sudoku_2 = {0};
+    convert_sudoku_string_to_p_grid(TEST_SUDOKU_STRING, sudoku_2);
+    copy_first_sudoku_contents_to_second(sudoku_2, sudoku_1);
+    print_sudoku(sudoku_1);
+    print_sudoku(sudoku_2);
+
+    set_cell_of_sudoku(0, sudoku_1, 8);
+    set_cell_of_sudoku(1, sudoku_2, 8);
+
+    print_sudoku(sudoku_1);
+    print_sudoku(sudoku_2);
+
+}
+
+
+void extract_test_data_from_line(char line[], char s_in[], char s_out[]){
+    for(int i=0; i<81; i++) s_in[i] = line[i];
+    for(int j=82; j<163; j++) s_out[j-82] = line[j];
+}
+
+void run_csv_sudokus_tests() {
+    p_grid sudoku = {0};
+    char s_in[81];
+    char s_out[81];
+    FILE *fp;
+    char in_buffer[255];
+    fp = fopen("../data/10k_sudokus.csv", "r");
+    int line_no = 0;
+    while(fscanf(fp, "%s", in_buffer) != EOF) {
+        extract_test_data_from_line(in_buffer, s_in, s_out);
+        /*
+        printf("Line %6d:\n", line_no);
+        for(int i=0; i<81; i++) printf("%c", s_in[i]);
+        printf("\n");
+        for(int i=0; i<81; i++) printf("%c", s_out[i]);
+        printf("\n\n");
+        */
+
+        line_no++;
+        convert_sudoku_string_to_p_grid(s_in, sudoku);
+        recursive_solver(sudoku);
+    }
+}
+
+
+void run_full_solver_tests() {
+    char HARD_SUDOKU_STRING[] = "536000000000703000100800059002000571600070008457010030061390705708620413300187600";
+    p_grid sudoku = {0};
+    convert_sudoku_string_to_p_grid(HARD_SUDOKU_STRING, sudoku);
+    print_sudoku(sudoku);
+    recursive_solver(sudoku);
+    print_sudoku(sudoku);
+}
+
+void run_filereader_tests(){
+    FILE *fp;
+    char buff[255];
+    fp = fopen("../data/10k_sudokus.csv", "r");
+
+    for(int j=0; j<10;j++){
+        fscanf(fp, "%s", buff);
+        printf("%d : %s\n", j, buff );
+
+    }
+   
+    int line_count=0;
+    while(fscanf(fp, "%s", buff) != EOF) {
+        line_count++;
+    }
+    printf("Line count: %5d.\n", line_count);
+    fclose(fp);
+}
+
 void run_tests() {
-    run_generation_and_sub_access_tests();
-    run_solvability_and_access_tests();
-    run_possibility_reduction_tests();
+    //run_generation_and_sub_access_tests();
+    //run_solvability_and_access_tests();
+    //run_possibility_reduction_tests();
+    //run_recursion_tools_tests();
+    //run_full_solver_tests();
+    //run_filereader_tests();
+    run_csv_sudokus_tests();
 }
 
 

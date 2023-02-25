@@ -154,15 +154,23 @@ void get_single_exclusion_data(char exclusion_counts[9], char ignore_idx, sub_co
 
 void get_total_exclusions(char values_to_exclude[9], char cell_idx, p_grid sudoku){
     char exclusion_counts[9] = {0};
+    //printf("Getting total exclusions for cell_idx %2d.\n", cell_idx);
+    //printf("Exclusion mask at start:  ");
+    //for(int j=0; j<P_RANGE; j++) printf("%d%s", exclusion_counts[j], (j==8) ? "\n" : " ");
+    
     sub_component sub;
 
     sub = get_row(cell_idx/9, sudoku);
     char row_exclusion_index = cell_idx%9;
     get_single_exclusion_data(exclusion_counts, row_exclusion_index, sub);
+    //printf("Exclusion mask after row: ");
+    //for(int j=0; j<P_RANGE; j++) printf("%d%s", exclusion_counts[j], (j==8) ? "\n" : " ");
 
     sub = get_col(cell_idx%9, sudoku);
     char col_exclusion_index = cell_idx/9;
     get_single_exclusion_data(exclusion_counts, col_exclusion_index, sub);
+    //printf("Exclusion mask after col: ");
+    //for(int j=0; j<P_RANGE; j++) printf("%d%s", exclusion_counts[j], (j==8) ? "\n" : " ");
 
     sub = get_block(cell_idx, sudoku);
     // The following index gets the "relative index" of the cell in the block
@@ -172,10 +180,17 @@ void get_total_exclusions(char values_to_exclude[9], char cell_idx, p_grid sudok
     // thus 5.
     char block_exclusion_index =  3*((cell_idx/9) % 3) + ((cell_idx%9) % 3);
     get_single_exclusion_data(exclusion_counts, cell_idx%9, sub);
+    //printf("Exclusion mask after blo: ");
+    //for(int j=0; j<P_RANGE; j++) printf("%d%s", exclusion_counts[j], (j==8) ? "\n" : " ");
+
 
     for(int i=0; i<P_RANGE; i++) {
-        values_to_exclude[i] = (exclusion_counts[i] >= 0) ? 1 : 0;
+        values_to_exclude[i] = (exclusion_counts[i] > 0) ? 1 : 0;
     }
+    //printf("Exclusion return is:      ");
+    //for(int j=0; j<P_RANGE; j++) printf("%d%s", values_to_exclude[j], (j==8) ? "\n" : " ");
+
+    
 }
 
 
@@ -186,10 +201,10 @@ bool reduce_possibilities(p_grid sudoku) {
         // If the cell value is already known, i.e. >0, it will not change.
         if (p_array_interpreter(sudoku[cell_idx/9][cell_idx%9])) continue;
 
-        printf("Reducer working on cell_idx %2d.\n", cell_idx);       
+        //printf("Reducer working on cell_idx %2d.\n", cell_idx);       
         char values_to_exclude[9] = {0};
         get_total_exclusions(values_to_exclude, cell_idx, sudoku);
-        printf("Exclusion array is: ");
+        //printf("Exclusion array is: ");
         for(int j=0; j<P_RANGE; j++) printf("%d%s", values_to_exclude[j], (j==8) ? "\n" : " ");
         for(int i=0; i<P_RANGE; i++){
             bool current_possibility = sudoku[cell_idx/9][cell_idx%9][i];
@@ -386,7 +401,7 @@ void run_possibility_reduction_tests(){
     // Test row exclusion retrieval
     
     sub_component sub;
-    int cell_idx = 54;
+    int cell_idx = 27;
 
     char row_exclusion_counts[9] = {0};
     sub = get_row(cell_idx/9, sudoku);
@@ -399,7 +414,7 @@ void run_possibility_reduction_tests(){
 
     char col_exclusion_counts[9] = {0};
     sub = get_col(cell_idx%9, sudoku);
-    get_single_exclusion_data(col_exclusion_counts, cell_idx%9, sub);
+    get_single_exclusion_data(col_exclusion_counts, cell_idx/9, sub);
     printf("For cell_idx %2d COL exclusion array is: ", cell_idx);
     for(int j=0; j<P_RANGE; j++) printf("%d%s", col_exclusion_counts[j], (j==8) ? "\n" : " ");
     printf("Extracted from sub values of:           ");
@@ -408,24 +423,30 @@ void run_possibility_reduction_tests(){
 
     char blo_exclusion_counts[9] = {0};
     sub = get_block(cell_idx, sudoku);
-    get_single_exclusion_data(blo_exclusion_counts, cell_idx%9, sub);
+    char block_exclusion_index =  3*((cell_idx/9) % 3) + ((cell_idx%9) % 3);
+    get_single_exclusion_data(blo_exclusion_counts, block_exclusion_index, sub);
     printf("For cell_idx %2d BLO exclusion array is: ", cell_idx);
     for(int j=0; j<P_RANGE; j++) printf("%d%s", blo_exclusion_counts[j], (j==8) ? "\n" : " ");
     printf("Extracted from sub values of:           ");
     for(int j=0; j<P_RANGE; j++) printf("%d%s", p_array_interpreter(sub[j]), (j==8) ? "\n" : " ");
     printf("\n");
 
-
+    char values_to_exclude[9] = {0};
+    get_total_exclusions(values_to_exclude, cell_idx, sudoku);
+    printf("Total exclusion array is:               ");
+    for(int j=0; j<P_RANGE; j++) printf("%d%s", values_to_exclude[j], (j==8) ? "\n" : " ");
     
 
-    /*
+    
     printf("%s\n", TEST_SUDOKU_STRING);
     convert_sudoku_string_to_p_grid(TEST_SUDOKU_STRING, sudoku);
     print_sudoku(sudoku);
-    bool changes = reduce_possibilities(sudoku);
-    print_sudoku(sudoku);
-    printf("Changes: %s\n", changes ? "Yes" : "No");
-    */
+    bool changes = false;
+    while(changes = reduce_possibilities(sudoku)) {
+        print_sudoku(sudoku);
+        printf("Changes: %s\n", changes ? "Yes" : "No");
+    }
+    
 }
 
 void run_tests() {

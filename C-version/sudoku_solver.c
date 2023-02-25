@@ -157,10 +157,12 @@ void get_total_exclusions(char values_to_exclude[9], char cell_idx, p_grid sudok
     sub_component sub;
 
     sub = get_row(cell_idx/9, sudoku);
-    get_single_exclusion_data(exclusion_counts, cell_idx%9, sub);
+    char row_exclusion_index = cell_idx%9;
+    get_single_exclusion_data(exclusion_counts, row_exclusion_index, sub);
 
     sub = get_col(cell_idx%9, sudoku);
-    get_single_exclusion_data(exclusion_counts, cell_idx/9, sub);
+    char col_exclusion_index = cell_idx/9;
+    get_single_exclusion_data(exclusion_counts, col_exclusion_index, sub);
 
     sub = get_block(cell_idx, sudoku);
     // The following index gets the "relative index" of the cell in the block
@@ -171,21 +173,31 @@ void get_total_exclusions(char values_to_exclude[9], char cell_idx, p_grid sudok
     char block_exclusion_index =  3*((cell_idx/9) % 3) + ((cell_idx%9) % 3);
     get_single_exclusion_data(exclusion_counts, cell_idx%9, sub);
 
-    
-
+    for(int i=0; i<P_RANGE; i++) {
+        values_to_exclude[i] = (exclusion_counts[i] >= 0) ? 1 : 0;
+    }
 }
 
 
 bool reduce_possibilities(p_grid sudoku) {
     bool changes = false;
 
-    for(int cell_idx; cell_idx<SUDOKU_LIST_LENGTH; cell_idx++){
-        // If the cell value is already known, it will not change.
+    for(int cell_idx=0; cell_idx<SUDOKU_LIST_LENGTH; cell_idx++){
+        // If the cell value is already known, i.e. >0, it will not change.
         if (p_array_interpreter(sudoku[cell_idx/9][cell_idx%9])) continue;
-        
+
+        printf("Reducer working on cell_idx %2d.\n", cell_idx);       
         char values_to_exclude[9] = {0};
         get_total_exclusions(values_to_exclude, cell_idx, sudoku);
-
+        printf("Exclusion array is: ");
+        for(int j=0; j<P_RANGE; j++) printf("%d%s", values_to_exclude[j], (j==8) ? "\n" : " ");
+        for(int i=0; i<P_RANGE; i++){
+            bool current_possibility = sudoku[cell_idx/9][cell_idx%9][i];
+            bool exclude_possibility = values_to_exclude[i];
+            char new_p = (current_possibility && !exclude_possibility) ? 1 : 0;
+            sudoku[cell_idx/9][cell_idx%9][i] = new_p;
+            changes = changes || (current_possibility != new_p);
+        }
     }
 
     return changes;
@@ -363,10 +375,63 @@ void run_solvability_and_access_tests() {
     else printf("This is NOT solvable.\n\n");
 }
 
+void run_possibility_reduction_tests(){
+    printf("\n<<<< Possibility Reduction Tests >>>>\n");
+    char TEST_SUDOKU_STRING[] = "765082090913004080840030150209000546084369200006405000000040009090051024001890765";
+    char NULL_SUDOKU_STRING[] = "000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+    p_grid sudoku = {0};
+    convert_sudoku_string_to_p_grid(TEST_SUDOKU_STRING, sudoku);
+
+    print_sudoku(sudoku);
+    // Test row exclusion retrieval
+    
+    sub_component sub;
+    int cell_idx = 54;
+
+    char row_exclusion_counts[9] = {0};
+    sub = get_row(cell_idx/9, sudoku);
+    get_single_exclusion_data(row_exclusion_counts, cell_idx%9, sub);
+    printf("For cell_idx %2d ROW exclusion array is: ", cell_idx);
+    for(int j=0; j<P_RANGE; j++) printf("%d%s", row_exclusion_counts[j], (j==8) ? "\n" : " ");
+    printf("Extracted from sub values of:           ");
+    for(int j=0; j<P_RANGE; j++) printf("%d%s", p_array_interpreter(sub[j]), (j==8) ? "\n" : " ");
+    printf("\n");
+
+    char col_exclusion_counts[9] = {0};
+    sub = get_col(cell_idx%9, sudoku);
+    get_single_exclusion_data(col_exclusion_counts, cell_idx%9, sub);
+    printf("For cell_idx %2d COL exclusion array is: ", cell_idx);
+    for(int j=0; j<P_RANGE; j++) printf("%d%s", col_exclusion_counts[j], (j==8) ? "\n" : " ");
+    printf("Extracted from sub values of:           ");
+    for(int j=0; j<P_RANGE; j++) printf("%d%s", p_array_interpreter(sub[j]), (j==8) ? "\n" : " ");
+    printf("\n");
+
+    char blo_exclusion_counts[9] = {0};
+    sub = get_block(cell_idx, sudoku);
+    get_single_exclusion_data(blo_exclusion_counts, cell_idx%9, sub);
+    printf("For cell_idx %2d BLO exclusion array is: ", cell_idx);
+    for(int j=0; j<P_RANGE; j++) printf("%d%s", blo_exclusion_counts[j], (j==8) ? "\n" : " ");
+    printf("Extracted from sub values of:           ");
+    for(int j=0; j<P_RANGE; j++) printf("%d%s", p_array_interpreter(sub[j]), (j==8) ? "\n" : " ");
+    printf("\n");
+
+
+    
+
+    /*
+    printf("%s\n", TEST_SUDOKU_STRING);
+    convert_sudoku_string_to_p_grid(TEST_SUDOKU_STRING, sudoku);
+    print_sudoku(sudoku);
+    bool changes = reduce_possibilities(sudoku);
+    print_sudoku(sudoku);
+    printf("Changes: %s\n", changes ? "Yes" : "No");
+    */
+}
+
 void run_tests() {
     run_generation_and_sub_access_tests();
     run_solvability_and_access_tests();
-
+    run_possibility_reduction_tests();
 }
 
 

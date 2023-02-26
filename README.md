@@ -97,4 +97,12 @@ pip install requirements.txt
 Then open the `Exploration.ipynb` -notebook and read on.
 
 
+# Todo / Ideas
+
+Create a dict with precalculated block indeces?
+- How about a dict that contains the "array_to_num" (and num_to_array) conversions?
+
+Run better diagnostics on what takes most time
+
+Check if OOP affects speed -- recurse the whole object.
 

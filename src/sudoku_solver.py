@@ -1,7 +1,7 @@
 from itertools import product
 
 
-def produce_p_grid_from_sudoku_string(input_sudoku: str):
+def convert_sudoku_string_to_p_grid(input_sudoku: str):
     base_p = 9 * [1]
     p_grid = [[base_p.copy() for _ in range(9)] for j in range(9)]
 
@@ -17,7 +17,7 @@ def produce_p_grid_from_sudoku_string(input_sudoku: str):
     return p_grid
 
 
-def p_grid_to_sudoku_string(sudoku) -> str:
+def convert_p_grid_to_sudoku_string(sudoku) -> str:
     sudoku_list = []
 
     for idx in range(81):
@@ -47,7 +47,11 @@ def print_sudoku(sudoku):
         if sum(sudoku[row][col]) != 1:
             value = "_"
         else:
-            value = str(sudoku[row][col].index(1) + 1)
+            for i, p in enumerate(sudoku[row][col]):
+                if p == 1:
+                    value = str(i + 1)
+
+        # value = str(sudoku[row][col].index(1) + 1)
 
         sudoku_nums.append(value)
 
@@ -273,22 +277,22 @@ def set_cell_of_sudoku(cell_idx, sudoku, fixed_number):
 
 
 def read_and_solve_sudoku_from_string(sudoku_string):
-    sudoku = produce_p_grid_from_sudoku_string(sudoku_string)
+    sudoku = convert_sudoku_string_to_p_grid(sudoku_string)
     success = recursive_solver(sudoku)
-    result_string = p_grid_to_sudoku_string(sudoku)
+    result_string = convert_p_grid_to_sudoku_string(sudoku)
 
     return result_string
 
 
 if __name__ == "__main__":
-    #sudoku_str = "765082090913004080840030150209000546084369200006405000000040009090051024001890765"
-    #sudoku = produce_p_grid_from_sudoku_string(sudoku_str)
-    #print_sudoku(sudoku)
-    with open('./data/10k_sudokus.csv', 'r') as fp:
+    # sudoku_str = "765082090913004080840030150209000546084369200006405000000040009090051024001890765"
+    # sudoku = produce_p_grid_from_sudoku_string(sudoku_str)
+    # print_sudoku(sudoku)
+    with open("./data/10k_sudokus.csv", "r") as fp:
         data = fp.readlines()
     from tqdm import tqdm
-    for line in tqdm(data):
-        sudoku_in = line.split(',')[0]
-        sudoku = produce_p_grid_from_sudoku_string(sudoku_in)
-        recursive_solver(sudoku)
 
+    for line in tqdm(data):
+        sudoku_in = line.split(",")[0]
+        sudoku = convert_sudoku_string_to_p_grid(sudoku_in)
+        recursive_solver(sudoku)

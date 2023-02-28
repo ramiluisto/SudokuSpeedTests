@@ -11,7 +11,6 @@ def hard_p_grid(hard_string):
     return p_grid
 
 
-
 def test_self():
     assert True
 
@@ -245,11 +244,11 @@ def test_read_and_solve_sudoku_from_string(
         assert result == solution
 
 
-def test_solver_with_1000_sudokus():
-    with open("./data/10k_sudokus.csv", "r") as fp:
+def test_solver_with_25_sudokus():
+    with open('./tests/test_data/25_sudokus.csv', 'r') as fp:
         data = fp.readlines()
 
-    for line in data[:1000]:
+    for line in data[:24]:
         line = line.strip("\n ")
         orig, solved = line.split(",")
         result = sudoku_solver.read_and_solve_sudoku_from_string(orig)

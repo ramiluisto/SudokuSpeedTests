@@ -141,7 +141,6 @@ def test_get_simple_mask(simple_sudoku_object):
     assert total_mask == [1, 0, 1, 1, 1, 1, 1, 1, 1]
 
 
-
 def test_reduce_possibilities(simple_sudoku_object):
     assert simple_sudoku_object.sudoku[2][2] == [1] * 9
     one_change = simple_sudoku_object.reduce_possibilities()

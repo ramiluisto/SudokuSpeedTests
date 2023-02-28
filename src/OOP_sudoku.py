@@ -56,7 +56,7 @@ class Sudoku:
                 numbers_in_collection.append(num)
 
         return len(set(numbers_in_collection)) < len(numbers_in_collection)
-    
+
     @staticmethod
     def extract_exclusions(exclusion_idx, possibilities):
         non_current = [
@@ -164,7 +164,7 @@ class Sudoku:
             self.sudoku[row_idx][col_idx] = new_possibilities
 
         return changes
-    
+
     def get_simple_mask(self, row_idx, col_idx):
         row = self.row(row_idx)
         col = self.col(col_idx)
@@ -183,9 +183,6 @@ class Sudoku:
         ]
 
         return total_mask
-
-
-
 
     ################################
     # Special magic methods

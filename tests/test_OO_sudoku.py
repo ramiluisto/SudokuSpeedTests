@@ -9,6 +9,7 @@ def simple_sudoku_object(simple_sudoku_string):
     Sudoku = sudoku_solver.Sudoku(simple_sudoku_string)
     return Sudoku
 
+
 @pytest.fixture
 def simple_solved_sudoku_object(simple_sudoku_string_solved):
     Sudoku = sudoku_solver.Sudoku(simple_sudoku_string_solved)
@@ -81,16 +82,10 @@ def test_p_grid_elt_translator():
     assert p_grid_elt_translator([0, 1, 0, 0, 0, 1, 0, 0, 0]) == 0
 
 
-def test_first_unsolved_cell_index(
-    simple_sudoku_object,
-    simple_solved_sudoku_object
-):
-    assert (
-        simple_sudoku_object.first_unsolved_cell_index == 3
-    )
-    assert (
-        simple_solved_sudoku_object.first_unsolved_cell_index == -1
-    )
+def test_first_unsolved_cell_index(simple_sudoku_object, simple_solved_sudoku_object):
+    assert simple_sudoku_object.first_unsolved_cell_index == 3
+    assert simple_solved_sudoku_object.first_unsolved_cell_index == -1
+
 
 def test_still_solvable(simple_sudoku_object, simple_solved_sudoku_object):
     assert simple_sudoku_object.still_solvable
@@ -113,17 +108,51 @@ def test_still_solvable(simple_sudoku_object, simple_solved_sudoku_object):
     assert simple_solved_sudoku_object.still_solvable
 
 
-
 def test_collision_in_collection(simple_sudoku_object):
     for j in range(9):
-        assert not simple_sudoku_object.collision_in_collection(simple_sudoku_object.row(j))
-
-        
+        assert not simple_sudoku_object.collision_in_collection(
+            simple_sudoku_object.row(j)
+        )
 
     bad_string = 72 * "0" + "10000001"
-    sudoku = sudoku_solver.Sudoku(bad_string)  
+    sudoku = sudoku_solver.Sudoku(bad_string)
     assert simple_sudoku_object.collision_in_collection(sudoku.row(8))
     assert not simple_sudoku_object.collision_in_collection(sudoku.row(5))
 
 
+def test_extract_exclusions(simple_sudoku_object):
+    possibility_grid = simple_sudoku_object.sudoku[0]
+    result = simple_sudoku_object.extract_exclusions(0, possibility_grid)
+    assert result == [0, 1, 0, 0, 1, 1, 0, 1, 1]
 
+    possibility_grid = simple_sudoku_object.sudoku[3]
+    result = simple_sudoku_object.extract_exclusions(8, possibility_grid)
+    assert result == [0, 1, 0, 1, 1, 0, 0, 0, 1]
+
+
+def test_get_simple_mask(simple_sudoku_object):
+    total_mask = simple_sudoku_object.get_simple_mask(0, 0)
+    assert total_mask == [1, 1, 1, 1, 1, 1, 0, 1, 1]
+
+    total_mask = simple_sudoku_object.get_simple_mask(1, 1)
+    assert total_mask == [0, 0, 1, 1, 1, 1, 1, 1, 1]
+
+    total_mask = simple_sudoku_object.get_simple_mask(2, 2)
+    assert total_mask == [1, 0, 1, 1, 1, 1, 1, 1, 1]
+
+
+
+def test_reduce_possibilities(simple_sudoku_object):
+    assert simple_sudoku_object.sudoku[2][2] == [1] * 9
+    one_change = simple_sudoku_object.reduce_possibilities()
+    assert simple_sudoku_object.sudoku[2][2] == [0, 1, 0, 0, 0, 0, 0, 0, 0]
+    assert one_change
+
+    second_change = simple_sudoku_object.reduce_possibilities()
+    assert second_change
+
+    third_change = simple_sudoku_object.reduce_possibilities()
+    assert third_change
+
+    fourth_change = simple_sudoku_object.reduce_possibilities()
+    assert not fourth_change

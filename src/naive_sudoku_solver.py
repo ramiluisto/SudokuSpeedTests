@@ -23,10 +23,7 @@ def convert_p_grid_to_sudoku_string(sudoku) -> str:
     for idx in range(81):
         row_idx = idx // 9
         col_idx = idx % 9
-        if sum(sudoku[row_idx][col_idx]) == 1:
-            num = 1 + sudoku[row_idx][col_idx].index(1)
-        else:
-            num = 0
+        num = p_array_to_num(sudoku[row_idx][col_idx])
         sudoku_list.append(str(num))
 
     sudoku_str = "".join(sudoku_list)
@@ -34,37 +31,13 @@ def convert_p_grid_to_sudoku_string(sudoku) -> str:
     return sudoku_str
 
 
-def print_sudoku(sudoku):
-    TOP_ROW_FORMAT = "╔═══════╤═══════╤═══════╗"
-    MID_ROW_FORMAT = "╟───────┼───────┼───────╢"
-    BOT_ROW_FORMAT = "╚═══════╧═══════╧═══════╝"
-    ROW_FORMAT = "║ {} {} {} │ {} {} {} │ {} {} {} ║"
+def p_array_to_num(p_array) -> int:
+    if sum(p_array) == 1:
+        num = 1 + p_array.index(1)
+    else:
+        num = 0
 
-    sudoku_nums = []
-    for idx in range(81):
-        row = idx // 9
-        col = idx % 9
-        if sum(sudoku[row][col]) != 1:
-            value = "_"
-        else:
-            for i, p in enumerate(sudoku[row][col]):
-                if p == 1:
-                    value = str(i + 1)
-
-        # value = str(sudoku[row][col].index(1) + 1)
-
-        sudoku_nums.append(value)
-
-    print(TOP_ROW_FORMAT)
-    for j in [0, 9, 18]:
-        print(ROW_FORMAT.format(*sudoku_nums[j : j + 9]))
-    print(MID_ROW_FORMAT)
-    for j in [27, 36, 45]:
-        print(ROW_FORMAT.format(*sudoku_nums[j : j + 9]))
-    print(MID_ROW_FORMAT)
-    for j in [54, 63, 72]:
-        print(ROW_FORMAT.format(*sudoku_nums[j : j + 9]))
-    print(BOT_ROW_FORMAT)
+    return num
 
 
 ################################################################
@@ -214,7 +187,7 @@ def still_solvable(sudoku):
 def collision_in_collection(collection):
     numbers_in_collection = []
     for possibilities in collection:
-        if sum(possibilities) == 1:
+        if p_array_to_num(possibilities) != 0:
             num = 1 + possibilities.index(1)
             numbers_in_collection.append(num)
 
@@ -230,7 +203,7 @@ def first_unsolved_cell_index(sudoku):
     for idx in range(81):
         row_idx = idx // 9
         col_idx = idx % 9
-        if sum(sudoku[row_idx][col_idx]) > 1:
+        if p_array_to_num(sudoku[row_idx][col_idx]) == 0:
             return idx
 
     return -1
@@ -282,4 +255,3 @@ def read_and_solve_sudoku_from_string(sudoku_string):
     result_string = convert_p_grid_to_sudoku_string(sudoku)
 
     return result_string
-

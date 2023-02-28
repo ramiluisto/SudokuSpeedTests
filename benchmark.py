@@ -1,5 +1,5 @@
 from tqdm import tqdm
-from src.sudoku_solver import read_and_solve_sudoku_from_string
+from src.naive_sudoku_solver import read_and_solve_sudoku_from_string
 
 with open('./data/10k_sudokus.csv', 'r') as fp:
     data = fp.readlines()

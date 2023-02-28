@@ -1,14 +1,17 @@
 import pytest
 
+
 @pytest.fixture
 def simple_sudoku_string():
     sudoku = "765082090913004080840030150209000546084369200006405000000040009090051024001890765"
     return sudoku
 
+
 @pytest.fixture
 def simple_sudoku_string_solved():
     sudoku = "765182493913574682842936157239718546584369271176425938658247319397651824421893765"
     return sudoku
+
 
 @pytest.fixture
 def hard_string():
@@ -54,8 +57,6 @@ def sudoku_string_test_pairs():
         ),
     )
     return pairs
-
-
 
 
 @pytest.fixture

@@ -1,6 +1,6 @@
 import pytest
 
-from tests.test_sudoku import simple_sudoku_string
+from tests.joint_fixtures import simple_sudoku_string
 
 
 def test_self():

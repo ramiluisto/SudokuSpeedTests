@@ -1,5 +1,5 @@
 import numpy as np
-from sudoku_solver import print_sudoku
+from src.naive_sudoku_solver import print_sudoku
 
 
 def string_to_p_grid(sudoku_string: str) -> np.array:

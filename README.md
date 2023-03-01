@@ -2,6 +2,9 @@
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
+[![Test coverage: full](https://img.shields.io/badge/coverage-100%25-green)
+
+
 
 The goal of this repo is to study the speed increases that can be achived
 from going first from 'naive Python' to 'numpy Python', and then to either

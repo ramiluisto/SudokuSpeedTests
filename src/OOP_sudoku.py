@@ -1,6 +1,14 @@
 import src.utils as utils
 
 
+def read_and_solve_sudoku_from_string(sudoku_string):
+    sudoku = Sudoku(sudoku_string)
+    success = sudoku.recursive_solver()
+    result_string = str(sudoku)
+
+    return result_string
+
+
 class Sudoku:
     block_shifts = (*range(3), *range(9, 12), *range(18, 21))
 
@@ -32,20 +40,6 @@ class Sudoku:
                 p_grid[row][col][value - 1] = 1
 
         return p_grid
-
-    @staticmethod
-    def convert_p_grid_to_sudoku_string(sudoku) -> str:
-        sudoku_list = []
-
-        for idx in range(81):
-            row_idx = idx // 9
-            col_idx = idx % 9
-            num = p_array_to_num(sudoku[row_idx][col_idx])
-            sudoku_list.append(str(num))
-
-        sudoku_str = "".join(sudoku_list)
-
-        return sudoku_str
 
     @staticmethod
     def collision_in_collection(collection):
@@ -81,6 +75,30 @@ class Sudoku:
 
     def __init__(self, sudoku_string):
         self.sudoku = self.convert_sudoku_string_to_p_grid(sudoku_string)
+
+    # The main recurser
+    def recursive_solver(self) -> bool:
+        changed = True
+        while changed:
+            changed = self.reduce_possibilities()
+            if not self.still_solvable:
+                return False
+
+        cell_idx = self.first_unsolved_cell_index
+        if cell_idx == -1:
+            # If there is no unsolved cell, then the sudoku is complete.
+            return True
+
+        possibilities = self.get_cell_possibilities(cell_idx)
+        for fixed_number in possibilities:
+            local_sudoku = self.copy()
+            local_sudoku.set_cell_of_sudoku(cell_idx, fixed_number)
+            result = local_sudoku.recursive_solver()
+            if result:
+                self.import_p_grid(local_sudoku)
+                return True
+
+        return False
 
     ################################
     # Accessors and whatnot
@@ -137,7 +155,18 @@ class Sudoku:
 
         return all(sum(self.sudoku[i // 9][i % 9]) >= 1 for i in range(81))
 
+    def set_cell_of_sudoku(self, cell_idx, fixed_number):
+        row_idx = cell_idx // 9
+        col_idx = cell_idx % 9
+
+        new_possibilities = [0] * 9
+        new_possibilities[fixed_number - 1] = 1
+
+        self.sudoku[row_idx][col_idx] = new_possibilities
+
+    ################################
     # More complex methods
+    ################################
 
     def reduce_possibilities(self) -> bool:
         changes = False
@@ -184,9 +213,30 @@ class Sudoku:
 
         return total_mask
 
+    def get_cell_possibilities(self, cell_idx):
+        row_idx = cell_idx // 9
+        col_idx = cell_idx % 9
+
+        possibility_mask = self.sudoku[row_idx][col_idx]
+        possibilities = [
+            idx + 1 for idx, value in enumerate(possibility_mask) if value == 1
+        ]
+
+        return possibilities
+
     ################################
-    # Special magic methods
+    # Special methods
     ################################
+
+    def copy(self):  # Copies the Sudoku OBJECT
+        return Sudoku(str(self))
+
+    def import_p_grid(self, source_sudoku_object):
+        for cell_idx in range(81):
+            for p_idx in range(9):
+                self.sudoku[cell_idx // 9][cell_idx % 9][
+                    p_idx
+                ] = source_sudoku_object.sudoku[cell_idx // 9][cell_idx % 9][p_idx]
 
     def __str__(self) -> str:
         sudoku_list = []

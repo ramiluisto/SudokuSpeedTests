@@ -70,10 +70,33 @@ def recursive_solver(sudoku : ThreeDimensionalArray) -> bool:
     return False
 ```
 
+### (On) what?
+
+I found a nice open source sudoku source on kaggle: LINK
 
 
+## Results
+
+The main idea is that I take turns improving my Python solvers and C solvers, with the aim of
+alternatively trying to close the gap with the Python versions and then trying to expand the
+gap with C versions.
+
+### The baseline - Simple Python vs Simple C
+
+I started by building a very straightforward implementation in Python (`./src/naive_sudoku_solver.py`).
+It's called naive because it doesn't do anything fancy, though it aims to be as pythonic as possible
+and not do too much obviously stupid things. On the benchmark machine (Azure VM of style XXX) it solved
+10k sudokus in just under 50 seconds.
+
+To compete the naive Python version, I then made a simple C-version. I call it simple because simple
+C is the best I can do, and it probably does some obviously stupid things as well because I don't 
+have a good touch to C. But in any case it runs and using the same algorithm it solves the same 10k
+sudokus in about 5 seconds - so an order of magnitude improvement right off the bat. 
+
+So C 1, Python 0 at this point. Let's see how we could start improving the Python version a bit.
 
 
+### 
 
 
 ## Getting started

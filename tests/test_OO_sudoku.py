@@ -16,6 +16,12 @@ def simple_solved_sudoku_object(simple_sudoku_string_solved):
     return Sudoku
 
 
+@pytest.fixture
+def hard_sudoku_object(hard_string):
+    Sudoku = sudoku_solver.Sudoku(hard_string)
+    return Sudoku
+
+
 def test_self():
     assert True
 
@@ -155,3 +161,78 @@ def test_reduce_possibilities(simple_sudoku_object):
 
     fourth_change = simple_sudoku_object.reduce_possibilities()
     assert not fourth_change
+
+
+def test_set_cell_of_sudoku(simple_sudoku_object):
+    for j in range(1, 10):
+        simple_sudoku_object.set_cell_of_sudoku(0, j)
+        for val in range(9):
+            if val == j - 1:
+                assert simple_sudoku_object.sudoku[0][0][val] == 1
+            else:
+                assert simple_sudoku_object.sudoku[0][0][val] == 0
+
+    for j in range(1, 10):
+        simple_sudoku_object.set_cell_of_sudoku(77, j)
+        for val in range(9):
+            if val == j - 1:
+                assert simple_sudoku_object.sudoku[8][5][val] == 1
+            else:
+                assert simple_sudoku_object.sudoku[8][5][val] == 0
+
+
+def test_create_copy_of_sudoku(simple_sudoku_object):
+    copied_sudoku = simple_sudoku_object.copy()
+
+    for cell_idx in range(81):
+        for p_idx in range(9):
+            copied_sudoku.sudoku[cell_idx // 9][cell_idx % 9][
+                p_idx
+            ] == simple_sudoku_object.sudoku[cell_idx // 9][cell_idx % 9][p_idx]
+
+    assert id(copied_sudoku) != id(simple_sudoku_object)
+
+    simple_sudoku_object.sudoku[0][0][0] = -1
+    assert copied_sudoku.sudoku[0][0][0] != -1
+
+
+def test_import_p_grid(simple_sudoku_object):
+    copied_sudoku = simple_sudoku_object.copy()
+    copied_sudoku.sudoku[0][0][0] = 5
+
+    id_before = id(simple_sudoku_object)
+    simple_sudoku_object.import_p_grid(copied_sudoku)
+    assert id(simple_sudoku_object) == id_before
+    assert id(copied_sudoku) != id_before
+    assert id(copied_sudoku) != id(simple_sudoku_object)
+    assert simple_sudoku_object.sudoku[0][0][0] == 5
+
+
+def test_recursive_solver(simple_sudoku_object, hard_sudoku_object):
+    assert simple_sudoku_object.recursive_solver()
+    assert simple_sudoku_object.first_unsolved_cell_index == -1
+
+    assert hard_sudoku_object.recursive_solver()
+
+
+def test_read_and_solve_sudoku_from_string(
+    simple_sudoku_string, simple_sudoku_string_solved, sudoku_string_test_pairs
+):
+    result = sudoku_solver.read_and_solve_sudoku_from_string(simple_sudoku_string)
+    assert result == simple_sudoku_string_solved
+
+    for pair in sudoku_string_test_pairs:
+        sudoku, solution = pair
+        result = sudoku_solver.read_and_solve_sudoku_from_string(sudoku)
+        assert result == solution
+
+
+def test_solver_with_25_sudokus():
+    with open("./tests/test_data/25_sudokus.csv", "r") as fp:
+        data = fp.readlines()
+
+    for line in data[:24]:
+        line = line.strip("\n ")
+        orig, solved = line.split(",")
+        result = sudoku_solver.read_and_solve_sudoku_from_string(orig)
+        assert result == solved

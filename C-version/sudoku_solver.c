@@ -3,13 +3,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-
+// CLI parameter stuff
+#define MAX_FILEPATH_LENGTH 511
 
 // More descriptive dimension names.
 #define SUDO_X 9
 #define SUDO_Y 9
 #define P_RANGE 9
 #define SUDOKU_LIST_LENGTH SUDO_X*SUDO_Y
+#define SUDOKU_STR_LENGTH 81
 
 // The following are used for pretty printing sudokus.
 #define TOP_ROW_FORMAT "╔═══════╤═══════╤═══════╗\n"
@@ -36,6 +38,7 @@ each such array represents either a row, column or a block. The pointers point
 to the corresponding cells in the main p_grid type sudoku array.*/
 typedef char** sub_component; 
 
+typedef char sudoku_string[SUDOKU_STR_LENGTH];
 
 void convert_sudoku_string_to_p_grid(char *raw, p_grid sudoku){
     /*This function is essentially defining the standard format
@@ -332,6 +335,58 @@ void p_array_pretty_print(sub_component sub){
     printf("\n");
 }
 
+void convert_p_grid_to_sudoku_string(p_grid sudoku, char* input_sudoku_string) {
+    char c;
+    for(int cell_index = 0; cell_index < SUDOKU_LIST_LENGTH; cell_index++){
+        c = '0' + p_array_interpreter(sudoku[cell_index/9][cell_index%9]);
+        input_sudoku_string[cell_index] = c;
+    }
+}
+
+
+void solve_from_string(sudoku_string sudoku_input, sudoku_string sudoku_result) {
+    p_grid sudoku = {0};
+    convert_sudoku_string_to_p_grid(sudoku_input, sudoku);
+    recursive_solver(sudoku);
+    char result[82] = {0}; //Sudoku string has 81 num chars and then '\0'.
+    convert_p_grid_to_sudoku_string(sudoku, result);
+    strcpy(sudoku_result, result);
+}
+
+void extract_data_from_line(char line[], char s_in[82], char s_out[82]){
+    for(int i=0; i<81; i++) s_in[i] = line[i];
+    for(int j=82; j<163; j++) s_out[j-82] = line[j];
+    s_in[81] = '\0';
+    s_out[81] = '\0';
+}
+
+void run_csv(int limit, char* filepath) {
+    char s_in[82];
+    char s_out[82];
+    char in_buffer[255];
+    FILE *fp;
+    fp = fopen(filepath, "r");
+
+    int line_no = 0;
+    int correct_count = 0;
+    char result[82];
+    while((fscanf(fp, "%s", in_buffer) != EOF) && (--limit >= 0)) {
+        extract_data_from_line(in_buffer, s_in, s_out);
+
+        line_no++;
+        solve_from_string(s_in, result);
+        if (!strcmp(result, s_out)) correct_count++;
+        else printf("\n\nDiscrepancy. Below is in, out, excpected.\n%s\n%s\n%s\n\n", s_in, result, s_out);
+    }
+    fclose(fp);
+
+    printf("We got %8d / %8d correct!", correct_count, line_no);
+}
+
+
+//////////////////////////////////
+// Tests
+/////////////////////////////////
 
 
 void run_generation_and_sub_access_tests() {
@@ -511,33 +566,30 @@ void run_recursion_tools_tests(){
 }
 
 
-void extract_test_data_from_line(char line[], char s_in[], char s_out[]){
-    for(int i=0; i<81; i++) s_in[i] = line[i];
-    for(int j=82; j<163; j++) s_out[j-82] = line[j];
-}
 
-void run_csv_sudokus_tests() {
+void run_csv_sudokus_tests(int limit) {
     p_grid sudoku = {0};
-    char s_in[81];
-    char s_out[81];
+    char s_in[82];
+    char s_out[82];
     FILE *fp;
     char in_buffer[255];
     fp = fopen("../data/10k_sudokus.csv", "r");
     int line_no = 0;
-    while(fscanf(fp, "%s", in_buffer) != EOF) {
-        extract_test_data_from_line(in_buffer, s_in, s_out);
-        /*
-        printf("Line %6d:\n", line_no);
-        for(int i=0; i<81; i++) printf("%c", s_in[i]);
-        printf("\n");
-        for(int i=0; i<81; i++) printf("%c", s_out[i]);
-        printf("\n\n");
-        */
+    int correct_count = 0;
+    char result[82];
+    while((fscanf(fp, "%s", in_buffer) != EOF) && (--limit >= 0)) {
+        extract_data_from_line(in_buffer, s_in, s_out);
 
         line_no++;
-        convert_sudoku_string_to_p_grid(s_in, sudoku);
-        recursive_solver(sudoku);
+        //convert_sudoku_string_to_p_grid(s_in, sudoku);
+        //recursive_solver(sudoku);
+        solve_from_string(s_in, result);
+        if (!strcmp(result, s_out)) correct_count++;
+        else printf("\n\nDiscrepancy. Below is in, out, excpected.\n%s\n%s\n%s\n\n", s_in, result, s_out);
     }
+    fclose(fp);
+
+    printf("We got %8d / %8d correct!", correct_count, line_no);
 }
 
 
@@ -548,6 +600,25 @@ void run_full_solver_tests() {
     print_sudoku(sudoku);
     recursive_solver(sudoku);
     print_sudoku(sudoku);
+
+    char str_input[] = "408309001290050873007600000619005248870400009503090706081920460900006300060803090";
+    char excpected_str_output[] = "458379621296154873137682954619735248872461539543298716381927465924516387765843192";
+    char result[82];
+    solve_from_string(str_input, result);
+
+    printf("\nFull solver received: %s", str_input);
+    printf("\nFull solver expected: %s", excpected_str_output);
+    printf("\nFull solver got:      %s", result);
+    printf("\nDoes it match? %s\n\n", (!strcmp(excpected_str_output, result)) ? "Yes!" : "No.");
+
+    char bad_str_input[] = "448309001290050873007600000619005248870400009503090706081920460900006300060803090";
+    char good_excpected_str_output[] = "458379621296154873137682954619735248872461539543298716381927465924516387765843192";
+    solve_from_string(bad_str_input, result);
+
+    printf("\nFull solver received: %s", bad_str_input);
+    printf("\nFull solver expected: %s", good_excpected_str_output);
+    printf("\nFull solver got:      %s", result);
+    printf("\nDoes it match? %s\n\n", (!strcmp(excpected_str_output, result)) ? "Yes!" : "No.");
 }
 
 void run_filereader_tests(){
@@ -567,20 +638,131 @@ void run_filereader_tests(){
     }
     printf("Line count: %5d.\n", line_count);
     fclose(fp);
+
+
+
 }
+
+void run_csv_separation_tests(){
+    FILE *fp;
+    char buff[255];
+    fp = fopen("../data/10k_sudokus.csv", "r");
+
+    char start[81];
+    char result[81];
+    for(int j=0; j<10;j++){
+        fscanf(fp, "%s", buff);
+        extract_data_from_line(buff, start, result);
+        printf("%d : %s | %s\n", j, start, result );
+    }
+    fclose(fp);
+}
+
+
 
 void run_tests() {
-    //run_generation_and_sub_access_tests();
-    //run_solvability_and_access_tests();
-    //run_possibility_reduction_tests();
-    //run_recursion_tools_tests();
-    //run_full_solver_tests();
-    //run_filereader_tests();
-    run_csv_sudokus_tests();
+    run_generation_and_sub_access_tests();
+    run_solvability_and_access_tests();
+    run_possibility_reduction_tests();
+    run_recursion_tools_tests();
+    run_full_solver_tests();
+    run_filereader_tests();
+    run_csv_separation_tests();
+    run_csv_sudokus_tests(200);
 }
 
 
-int main() {
-    run_tests();
+int main(int argc, char *argv[]) {
+    /* Main function handles CLI. Options are:
+     * -r : raw - interprets the given string as a a sudoku to solve.
+     * -t : testing - runs the basic tests
+     * -B : Benchmarking - runs the sudokus in the specified csv file.
+     * -o : output for the benchmarking results
+     * -S : Silent
+     * */
+
+    bool run_single_sudoku_flag = false;
+    bool run_troubleshoot_tests = false;
+    bool run_csv_test_file_flag = false;
+    bool write_next_benchmark_output = false;
+    bool benchmark_output_file_given = false;
+    bool silent_flag = false;
+    char test_data_filepath[MAX_FILEPATH_LENGTH];
+    char benchmark_result_filepath[MAX_FILEPATH_LENGTH];
+    char raw_sudoku_string[SUDOKU_LIST_LENGTH];
+
+    // Parse incoming args.
+    char *argument;
+    bool write_next_raw_sudoku = false;
+    bool write_next_csv_filepath = false;
+    while(--argc > 0) {
+        argument = *++argv;
+        if (argument[0] == '-') {
+            switch (argument[1]) {
+                case 'r':
+                    run_single_sudoku_flag = true;
+                    write_next_raw_sudoku = true;
+                    break;
+                case 't':
+                    run_troubleshoot_tests = true;
+                    break;
+                case 'B':
+                    run_csv_test_file_flag = true;
+                    write_next_csv_filepath = true;
+                    break;
+                case: 'o':
+                    write_next_benchmark_output = true;
+                    benchmark_output_file_given = true;
+                case 'S':
+                    silent_flag = true;
+                    break;
+                default:
+                    printf("Illegal option %c\n", argument[1]);
+                    argc = 0;
+                    break;
+            }
+        }
+        else {
+            if (write_next_csv_filepath) { 
+                strcpy(test_data_filepath, argument); 
+                write_next_csv_filepath = false;
+            }
+
+            if (write_next_raw_sudoku) { 
+                strcpy(raw_sudoku_string, argument); 
+                write_next_raw_sudoku = false;
+            }
+
+            if (write_next_benchmark_output) {
+                strcpy(benchmark_result_filepath, argument);
+                write_next_benchmark_output = false;
+            }
+            
+        }
+
+    }
+
+
+    if (run_troubleshoot_tests) {
+        printf("Running ts tests.\n");
+        run_tests();
+        printf("\nRunning ts tests complete.\n");
+    }
+
+    if (run_csv_test_file_flag) {
+        printf("Running csv tests from file %s.\n", test_data_filepath );
+        run_csv(10000000, test_data_filepath);
+        printf("\nRunning csv tests done.\n");
+    }
+
+    if (run_single_sudoku_flag) {
+        char result[82] = {0};
+        printf("%s", (silent_flag) ? "" : "Processing single Sudoku.\n");
+        if (!silent_flag) printf("Input: %s\n", raw_sudoku_string);
+        if (!silent_flag) printf("Output: ");
+        solve_from_string(raw_sudoku_string, result);
+        printf("%s\n", result);
+        printf("%s", (silent_flag) ? "" : "Processing done.\n");
+    }
 
 }

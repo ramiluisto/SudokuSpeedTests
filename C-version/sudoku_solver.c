@@ -360,12 +360,14 @@ void extract_data_from_line(char line[], char s_in[82], char s_out[82]){
     s_out[81] = '\0';
 }
 
-void run_csv(int limit, char* filepath) {
+void run_csv(int limit, char* filepath, bool output_filepath_flag, char* output_filepath) {
     char s_in[82];
     char s_out[82];
     char in_buffer[255];
-    FILE *fp;
+    FILE *fp, *fp_out;
     fp = fopen(filepath, "r");
+
+    if (output_filepath_flag) fp_out = fopen(output_filepath, "w");
 
     int line_no = 0;
     int correct_count = 0;
@@ -377,8 +379,14 @@ void run_csv(int limit, char* filepath) {
         solve_from_string(s_in, result);
         if (!strcmp(result, s_out)) correct_count++;
         else printf("\n\nDiscrepancy. Below is in, out, excpected.\n%s\n%s\n%s\n\n", s_in, result, s_out);
+
+        if (output_filepath_flag) fprintf(fp_out, "%s,%s\n", s_in, result);
+
     }
+
+
     fclose(fp);
+    if (output_filepath_flag) fclose(fp_out);
 
     printf("We got %8d / %8d correct!", correct_count, line_no);
 }
@@ -685,8 +693,9 @@ int main(int argc, char *argv[]) {
     bool run_troubleshoot_tests = false;
     bool run_csv_test_file_flag = false;
     bool write_next_benchmark_output = false;
-    bool benchmark_output_file_given = false;
+    bool benchmark_output_file_given_flag = false;
     bool silent_flag = false;
+
     char test_data_filepath[MAX_FILEPATH_LENGTH];
     char benchmark_result_filepath[MAX_FILEPATH_LENGTH];
     char raw_sudoku_string[SUDOKU_LIST_LENGTH];
@@ -710,9 +719,9 @@ int main(int argc, char *argv[]) {
                     run_csv_test_file_flag = true;
                     write_next_csv_filepath = true;
                     break;
-                case: 'o':
+                case 'o':
                     write_next_benchmark_output = true;
-                    benchmark_output_file_given = true;
+                    benchmark_output_file_given_flag = true;
                 case 'S':
                     silent_flag = true;
                     break;
@@ -751,14 +760,15 @@ int main(int argc, char *argv[]) {
 
     if (run_csv_test_file_flag) {
         printf("Running csv tests from file %s.\n", test_data_filepath );
-        run_csv(10000000, test_data_filepath);
+        run_csv(10000000, test_data_filepath, benchmark_output_file_given_flag, benchmark_result_filepath);
+
         printf("\nRunning csv tests done.\n");
     }
 
     if (run_single_sudoku_flag) {
         char result[82] = {0};
         printf("%s", (silent_flag) ? "" : "Processing single Sudoku.\n");
-        if (!silent_flag) printf("Input: %s\n", raw_sudoku_string);
+        if (!silent_flag) printf("Input:  %s\n", raw_sudoku_string);
         if (!silent_flag) printf("Output: ");
         solve_from_string(raw_sudoku_string, result);
         printf("%s\n", result);

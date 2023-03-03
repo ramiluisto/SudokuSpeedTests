@@ -1,20 +1,17 @@
 # My personal speed analysis repo
 
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-
-[![Test coverage: full](https://img.shields.io/badge/coverage-100%25-green)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [Test coverage: full](https://img.shields.io/badge/coverage-100%25-green)
 
 
-
-The goal of this repo is to study the speed increases that can be achived
-from going first from 'naive Python' to 'numpy Python', and then to either
-building specific crucial parts as C-libraries, or to building the whole system
-in C. The differences are benchmarked with a simple recursive Sudoku solver.
+The goal of this repo is to study the speed increases that **I as a particular 
+Python dev** can achieve by going from 'naive Python' to using either more
+pythonic tools, using C-powered libraries like numpy, or by at the extreme
+using straight up C-code. The differences are benchmarked with a simple recursive Sudoku solver.
 
 ## Introduction
 
-Here I'm describing some general ideas. If you just wanna get started, 
-jump to the next section ('Getting Started').
+Here I'm describing some general ideas. If you just wanna get started and see
+the various benchmarks jump to the section ('Getting Started').
 
 ### Why?
 
@@ -38,9 +35,9 @@ is a logical game where you have a 9x9 grid divided into 9 3x3 blocks:
 The rule of the game is to fill the grid with numbers 1-9 such that any row, column or block
 contains each of the numbers 1-9 exactly once. The difficulty of the game depends on which 
 cells have been pre-filled with which numbers. Estimating the difficulty of a sudoku is
-a non-trivial task, though given starting configuration adding legal numbers always
+a non-trivial task, though if you are given starting configuration that has only one solution then adding legal numbers always
 makes it easier. (Removing them might not as multiple solutions might emerge by reducing
-restrictions.)
+restrictions, and if the starting solution has multiple solutions then adding a number might rule out simpler solutions.)
 
 For the system we'll handle data input and output as strings of numbers, i.e. a single
 sudoku will be an string of length 81, with each character one of the numbers 0-9. Here
@@ -48,18 +45,31 @@ with a 0 we will mean that a cell is unfilled. The numbers in this string are ta
 be in such an order that they fill the standard 9x9 grid one by one, starting from top left
 and moving through the cells left to right, top to bottom.
 
+Internally we'll handle the Sudoku as a 9x9 grid of *possibilities*. By this I mean
+that the content of any given sudoku cell will be an array of booleans, where each index
+is representing if a given number could be allowed in that cell. We do this instead of
+just having a 9x9 grid of numbers 0-9 for two reasons:
+- This base architecture makes it much easier to include some more complicated strategies.
+- We don't want to make the algorithm and the underlying structure *too* simple. Benchmarking Python vs Numpy vs C with a for loop doesn't sound interesting enough.
+Anyway, so the basic structure we'll look at will be something we call a *possibility grid*:
+```
+boolean p_grid[NUM_ROWS][NUM_COLS][NUM_POSSIBILITIES]
+```
+though all of the numbers here are actually just 9 and depending on the 
+version, instead of booleans we might be using integers or chars.
 
-Pseudocode for the solver.
+Anyway, pseudocode for the main solver will look like this:
 ```python
-def recursive_solver(sudoku : ThreeDimensionalArray) -> bool:
+def recursive_solver(sudoku : PossibilityGrid) -> bool:
 
     changed = True
     while(changed):
-        changed = reduce_possibilities(sudoku)
+        changed = reduce_possibilities(sudoku) # Clever strategies
 
     if is_solved(sudoku):
         return True
 
+    # Recursive brute forcing starts here:
     cell_idx = first_unsolved_cell_index(sudoku)
     possibilities = get_cell_possibilities(cell_idx, sudoku)
     for p in possibilities:
@@ -72,6 +82,7 @@ def recursive_solver(sudoku : ThreeDimensionalArray) -> bool:
 
     return False
 ```
+So here the `reduce_possibilities` is responsible for clever strategies like "for this cell, the only number not yet appearing in its row, col and block is 5, so the only possibility for this cell is 5", where as the latter recursive part will just start brute forcing the solution after the clever stuff has failed. 
 
 ### (On) what?
 

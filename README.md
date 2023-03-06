@@ -135,7 +135,7 @@ So in `./src/OOP_sudoku.py` we hate the very same solver as before, but in as a 
 So no, the Object structure doesn't bring any extra baggage, we're even a bit faster than we were with the naive solution. If we find the energy, we'll later on try to understand why we were faster
 here. (I wouldn't be surprised if the answer has something to do with "optimizing bytocode interpreter".)
 
-### Round 4 - Improved Naive Python
+### Round 2 - Improved Naive Python
 
 Let's start small before even trying to bring out the big guns. 
 
@@ -268,12 +268,48 @@ method `__str__` which is used in the copying of a sudoku.
 The built-in `sum` method is also used only in methods listed above, together with another
 static method called `p_array_to_num` which has also found its way to the top 30 of both lists.
 
-#### Conclusions
-
 So looking how these different subparts consume our CPU time, we note that there is actually a lot to improve. For example, looking at our `extract_exclusions` method which holds top rank in both total and cumulative times, we see that we are using the `sum` only to detect if a given 
 possibility array is already completely determined. And in fact, most of the uses of `sum`
 are only used to figure out if a given probability array has only a single '1' in it. This seeems
 like an overkill.
+
+So instead of sums, let's do a faster lookup. There are only 9 possibilities for 
+an array of length 9 to have only one '1', so let's enumerate them and turn the check into
+a dictionary lookup. To do this, though, we need something hashable, so we need to turn from 
+lists to tuples. Let's go one step further: we'll change the whole Sudoku data format from 3-dimensional list to a 2-dimensional list of tuples!
+
+So what we changed going from `OOP_sudoku.py` to `OOP_sudoku_improved.py` was:
+1. Turned the whole "from possibility array to number and back" thing to rely on 
+dictionary lookups of pre-stored tuples.
+2. Changed the internal sudoku format to have all the possibility arrays to be tuples
+instead of lists.
+3. Reduced for loops by adding more early returns, plus other minor improvements.
+
+And here are the results:
+
+|              | s/Sudoku | 10k Sudokus |
+|--------------|----------|-------------|
+| Naive Python | 5.1e-03  | 51s         |
+| Naive C      | 5.4e-04  | 5.2s        |
+| OOP Python   | 4.9e-03  | 49s         |
+| Improved OOP Python | 4.7e-03 | 47s |
+
+So with all that work we shaved about four percents off our running time. cProfiler tells that for the total time the biggest time users are now:
+```
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+  6406959   20.422    0.000   33.407    0.000 OOP_sudoku_improved.py:47(extract_exclusions)
+ 81526820   16.343    0.000   16.343    0.000 OOP_sudoku_improved.py:35(p_array_to_num)
+  2287224    9.319    0.000   15.190    0.000 OOP_sudoku_improved.py:73(collision_in_collection)
+    84712    9.137    0.000   65.780    0.001 OOP_sudoku_improved.py:179(reduce_possibilities)
+  2898061    8.713    0.000   10.813    0.000 OOP_sudoku_improved.py:124(block)
+  2135653    5.703    0.000   53.776    0.000 OOP_sudoku_improved.py:205(get_simple_mask)
+ 62948777    5.046    0.000    5.046    0.000 {method 'append' of 'list' objects}
+  2135653    3.099    0.000    3.099    0.000 OOP_sudoku_improved.py:218(<listcomp>)
+  6406959    2.731    0.000    2.731    0.000 OOP_sudoku_improved.py:49(<listcomp>)
+  2898061    2.562    0.000    2.562    0.000 OOP_sudoku_improved.py:122(<listcomp>)
+  2898061    1.776    0.000    4.338    0.000 OOP_sudoku_improved.py:121(col)
+```
+
 
 ### Round 3 - Numpy
 

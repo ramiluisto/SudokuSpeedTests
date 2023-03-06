@@ -1,3 +1,4 @@
+from collections import defaultdict
 import src.utils as utils
 
 
@@ -12,62 +13,72 @@ def read_and_solve_sudoku_from_string(sudoku_string):
 class Sudoku:
     block_shifts = (*range(3), *range(9, 12), *range(18, 21))
 
+    zero_cell = tuple(0 for _ in range(9))
+    ones_cell = tuple(1 for _ in range(9))
+
+    determined_p_tuples = {
+        tuple(0 if i != idx else 1 for i in range(9)): idx + 1 for idx in range(9)
+    }
+    determined_p_array_lookup = defaultdict(lambda: 0, determined_p_tuples)
+
+    determined_num_to_p_array = {
+        value: key for key, value in determined_p_tuples.items()
+    }
+    determined_num_lookup = defaultdict(
+        lambda: tuple(1 for _ in range(9)), determined_num_to_p_array
+    )
+
     ################################
-    # Static methods
+    # Class(y) methods
     ################################
 
-    @staticmethod
-    def p_array_to_num(p_array) -> int:
-        if sum(p_array) == 1:
-            num = 1 + p_array.index(1)
-        else:
-            num = 0
+    @classmethod
+    def p_array_to_num(cls, p_array) -> int:
+        num = cls.determined_p_array_lookup[p_array]
 
         return num
 
-    @staticmethod
-    def convert_sudoku_string_to_p_grid(input_sudoku: str):
-        base_p = 9 * [1]
-        p_grid = [[base_p.copy() for _ in range(9)] for j in range(9)]
+    @classmethod
+    def num_to_p_array(cls, num):
+        p_array = cls.determined_num_lookup[num]
 
+        return p_array
+
+    @classmethod
+    def extract_exclusions(cls, exclusion_idx, possibilities):
+        exclusion_mask = [0 for _ in range(9)]
+        for idx, possibility in enumerate(possibilities):
+            if idx == exclusion_idx:
+                continue
+
+            num = cls.p_array_to_num(possibility)
+            if num >= 1:
+                exclusion_mask[num-1] = 1
+
+        return exclusion_mask
+
+    @classmethod
+    def convert_sudoku_string_to_p_grid(cls, input_sudoku: str):
+        p_grid = [[() for _ in range(9)] for j in range(9)]
         for idx, char in enumerate(input_sudoku):
             row = idx // 9
             col = idx % 9
             value = int(char)
 
-            if value != 0:
-                p_grid[row][col] = 9 * [0]
-                p_grid[row][col][value - 1] = 1
+            p_grid[row][col] = cls.num_to_p_array(value)
+
 
         return p_grid
 
-    @staticmethod
-    def collision_in_collection(collection):
+    @classmethod
+    def collision_in_collection(cls, collection):
         numbers_in_collection = []
         for possibilities in collection:
-            if sum(possibilities) == 1:
-                num = 1 + possibilities.index(1)
+            num = cls.p_array_to_num(possibilities)
+            if num != 0:
                 numbers_in_collection.append(num)
 
         return len(set(numbers_in_collection)) < len(numbers_in_collection)
-
-    @staticmethod
-    def extract_exclusions(exclusion_idx, possibilities):
-        non_current = [
-            possibility
-            for idx, possibility in enumerate(possibilities)
-            if idx != exclusion_idx
-        ]
-
-        exclusion_mask = [0 for _ in range(9)]
-        for possibility in non_current:
-            if sum(possibility) != 1:
-                continue
-            else:
-                idx = possibility.index(1)
-                exclusion_mask[idx] = 1
-
-        return exclusion_mask
 
     ################################
     # Object level stuff
@@ -153,16 +164,13 @@ class Sudoku:
             if collision:
                 return False
 
-        return all(sum(self.sudoku[i // 9][i % 9]) >= 1 for i in range(81))
+        return all( (self.sudoku[i // 9][i % 9]) != (0, 0, 0, 0, 0, 0, 0, 0, 0) for i in range(81))
 
     def set_cell_of_sudoku(self, cell_idx, fixed_number):
         row_idx = cell_idx // 9
         col_idx = cell_idx % 9
 
-        new_possibilities = [0] * 9
-        new_possibilities[fixed_number - 1] = 1
-
-        self.sudoku[row_idx][col_idx] = new_possibilities
+        self.sudoku[row_idx][col_idx] = self.num_to_p_array(fixed_number)
 
     ################################
     # More complex methods
@@ -175,7 +183,7 @@ class Sudoku:
             row_idx = idx // 9
             col_idx = idx % 9
 
-            if sum(self.sudoku[row_idx][col_idx]) == 1:
+            if self.p_array_to_num(self.sudoku[row_idx][col_idx]) != 0:
                 continue
 
             exclusion_mask = self.get_simple_mask(row_idx, col_idx)
@@ -190,7 +198,7 @@ class Sudoku:
                     changes = True
                 new_possibilities.append(new_value)
 
-            self.sudoku[row_idx][col_idx] = new_possibilities
+            self.sudoku[row_idx][col_idx] = tuple(new_possibilities)
 
         return changes
 
@@ -233,10 +241,9 @@ class Sudoku:
 
     def import_p_grid(self, source_sudoku_object):
         for cell_idx in range(81):
-            for p_idx in range(9):
-                self.sudoku[cell_idx // 9][cell_idx % 9][
-                    p_idx
-                ] = source_sudoku_object.sudoku[cell_idx // 9][cell_idx % 9][p_idx]
+            self.sudoku[cell_idx // 9][cell_idx % 9] = source_sudoku_object.sudoku[
+                cell_idx // 9
+            ][cell_idx % 9]
 
     def __str__(self) -> str:
         sudoku_list = []

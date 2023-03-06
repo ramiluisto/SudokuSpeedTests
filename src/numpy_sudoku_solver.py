@@ -1,5 +1,39 @@
 import numpy as np
-from src.naive_sudoku_solver import print_sudoku
+
+
+def print_sudoku(sudoku):
+    TOP_ROW_FORMAT = "╔═══════╤═══════╤═══════╗"
+    MID_ROW_FORMAT = "╟───────┼───────┼───────╢"
+    BOT_ROW_FORMAT = "╚═══════╧═══════╧═══════╝"
+    ROW_FORMAT = "║ {} {} {} │ {} {} {} │ {} {} {} ║"
+
+    sudoku_nums = []
+    for idx in range(81):
+        row = idx // 9
+        col = idx % 9
+
+        array_sum = 0
+        for i, p in enumerate(sudoku[row][col]):
+            array_sum += p
+            if p == 1:
+                value = str(i + 1)
+
+        if array_sum != 1:
+            value = "_"
+
+        sudoku_nums.append(value)
+
+    print(TOP_ROW_FORMAT)
+    for j in [0, 9, 18]:
+        print(ROW_FORMAT.format(*sudoku_nums[j : j + 9]))
+    print(MID_ROW_FORMAT)
+    for j in [27, 36, 45]:
+        print(ROW_FORMAT.format(*sudoku_nums[j : j + 9]))
+    print(MID_ROW_FORMAT)
+    for j in [54, 63, 72]:
+        print(ROW_FORMAT.format(*sudoku_nums[j : j + 9]))
+    print(BOT_ROW_FORMAT)
+
 
 
 def string_to_p_grid(sudoku_string: str) -> np.array:
@@ -106,6 +140,30 @@ print_sudoku(sudoku)
 print("Block: ")
 block = sudoku[block_selection_x, block_selection_y, :]
 
-for i in range(9):
-    print(p_array_to_num(block[i]), end=" ")
-print()
+
+
+row = sudoku[2]
+print('Second row')
+print(row)
+summed_row = np.sum(row, axis = -1)
+fixed_elts = np.where(summed_row ==1)[0]
+fixed_rows = np.take(row, fixed_elts, axis = 0)
+collisions = np.sum(fixed_rows, axis = 0)
+print(f"Summed: {summed_row}")
+print(f"Fixed elts: {fixed_elts}")
+print(f"Fixed rows {fixed_rows}")
+print(f"Collisions: {collisions}")
+
+print(np.all(collisions <= 1))
+collisions[2] = 4
+print(collisions)
+print(np.all(collisions <= 1))
+
+print('\n\n')
+print(row)
+print(row.shape)
+omitted = np.delete(row, [2], axis = 0)
+print(omitted)
+print(row.shape)
+
+

@@ -8,6 +8,8 @@ from src.OOP_sudoku import read_and_solve_sudoku_from_string as oop_solver
 from src.OOP_sudoku_improved import (
     read_and_solve_sudoku_from_string as improved_oop_solver,
 )
+from src.numpy_sudoku import read_and_solve_sudoku_from_string as numpy_solver
+
 from src.CLI_C_caller import read_and_solve_sudoku_from_string as convoluted_C_solver
 from src.CLI_C_caller import run_C_benchmark
 
@@ -62,4 +64,5 @@ if __name__ == "__main__":
     # run_benchmark(oop_solver, "OOP solver")
     # run_benchmark(convoluted_C_solver, "Convoluted C-solver")
     # run_C_benchmark_wrapper("Wrapped C-Benchmark tool")
-    run_benchmark(improved_oop_solver, "Improved OOP solver")
+    # run_benchmark(improved_oop_solver, "Improved OOP solver")
+    run_benchmark(numpy_solver, "Numpy solver")

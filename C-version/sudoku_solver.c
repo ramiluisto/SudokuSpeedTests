@@ -677,6 +677,7 @@ void run_tests() {
     run_filereader_tests();
     run_csv_separation_tests();
     run_csv_sudokus_tests(200);
+    printf("\nI Finished tests without crashing.\n");
 }
 
 

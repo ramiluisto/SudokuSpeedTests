@@ -102,7 +102,7 @@ def test_first_unsolved_cell_index(simple_sudoku_object, simple_solved_sudoku_ob
 def test_still_solvable(simple_sudoku_object, simple_solved_sudoku_object):
     assert simple_sudoku_object.still_solvable
 
-    simple_sudoku_object.sudoku[7][7] = tuple([0] * 9)
+    simple_sudoku_object.sudoku[7][7] = np.zeros(9)
     assert not simple_sudoku_object.still_solvable
 
     bad_row = 72 * "0" + "10000001"

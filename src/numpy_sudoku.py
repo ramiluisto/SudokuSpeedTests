@@ -48,7 +48,7 @@ class Sudoku:
     def collision_in_collection(cls, collection : np.array) -> bool:
         collisions = cls.get_fixed_projection_array(collection)
 
-        return np.all(collisions <= 1)
+        return np.any(collisions > 1)
 
     @classmethod
     def extract_exclusions(cls, exclusion_idx, possibilities):
@@ -116,10 +116,10 @@ class Sudoku:
 
     @property
     def first_unsolved_cell_index(self):
-        x, y = np.where( np.sum(sudoku, axis=2) > 1 )
+        y, x = np.where( np.sum(self.sudoku, axis=2) > 1 )
         if len(x) == 0:
             return -1
-        return 9*y + x
+        return 9*y[0] + x[0]
 
     @property
     def still_solvable(self):

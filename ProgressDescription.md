@@ -1,14 +1,15 @@
 # Story mode description 
 
+So this file will describe, in pretty much chronological order, what I've been up to here.
+
+## Prologue - What are working with?
 
 
-
-To choose a target, we're gonna look at a straightforward recursive Sudoku solver. 
+To choose a target for our speedup attempts, we're gonna look at a straightforward recursive Sudoku solver. 
 To put all to the same page with the terminology, a [sudoku](https://en.wikipedia.org/wiki/Sudoku)
 is a logical game where you have a 9x9 grid divided into 9 3x3 blocks:
 
-<img src="./images/Sudoku.svg">
-
+<img src="./images/Sudoku.svg" width="600" height="600"/>
 
 The rule of the game is to fill the grid with numbers 1-9 such that any row, column or block
 contains each of the numbers 1-9 exactly once. The difficulty of the game depends on which 
@@ -29,11 +30,12 @@ is representing if a given number could be allowed in that cell. We do this inst
 just having a 9x9 grid of numbers 0-9 for two reasons:
 - This base architecture makes it much easier to include some more complicated strategies.
 - We don't want to make the algorithm and the underlying structure *too* simple. Benchmarking Python vs Numpy vs C with a for loop doesn't sound interesting enough.
-Anyway, so the basic structure we'll look at will be something we call a *possibility grid*:
+
+So the basic structure we'll look at will be something we call a *possibility grid*:
 ```
 boolean p_grid[NUM_ROWS][NUM_COLS][NUM_POSSIBILITIES]
 ```
-though all of the numbers here are actually just 9 and depending on the 
+though all of the LITERAL_CONSTANTS here are actually just 9 and depending on the 
 version, instead of booleans we might be using integers or chars.
 
 Anyway, pseudocode for the main solver will look like this:
@@ -62,29 +64,31 @@ def recursive_solver(sudoku : PossibilityGrid) -> bool:
 ```
 So here the `reduce_possibilities` is responsible for clever strategies like "for this cell, the only number not yet appearing in its row, col and block is 5, so the only possibility for this cell is 5", where as the latter recursive part will just start brute forcing the solution after the clever stuff has failed. 
 
-### (On) what?
+### What's our benchmark data?
 
-I found a nice open source sudoku source on kaggle: LINK
+I found a nice open source (Public Domain licennse) 
+sudoku source on (kaggle)[https://www.kaggle.com/datasets/rohanrao/sudoku].
+From that I sampled randomly 10k sudokus, which can be found in the folder `./data/` as a csv. This turned out to be a big enough sample to get various levels of difficulty without being too boring to wait to complete.
 
-
-## Results
+## Chapter 1 - Python versus C in various rounds
 
 The main idea is that I take turns improving my Python solvers and C solvers, with the aim of
 alternatively trying to close the gap with the Python versions and then trying to expand the
-gap with C versions. The benchmarks were run (at the time of writing) on an Azure VM B2ms (2 vcpus, 8 GiB memory) running Ubuntu 18.04.
+gap with C versions. The benchmarks were run (at the time of writing) on an Azure VM B2ms (2 vcpus, 8 GiB memory) running Ubuntu 18.04. In my rudimentary scorecard, getting Python within an order of magnitude range of C is a draw, and getting Python to take less than 5x the time that C takes is a win for Python.
 
 ### Round 1 - The baseline - Simple Python vs Simple C
 
-I started by building a very straightforward implementation in Python 
+I built a very straightforward implementation in Python 
 (`./src/naive_sudoku_solver.py`).
 It's called naive because it doesn't do anything fancy, though it aims to be as pythonic as possible
 and not do too much obviously stupid things. On the benchmark machine  it solved
 10k sudokus in just under 50 seconds.
 
-To compete the naive Python version, I then made a simple C-version. I call it simple because simple
+To compete the naive Python version, I then made a simple C-version (`./C-version/sudoku_solver.c`). 
+I call it simple because simple
 C is the best I can do, and it probably does some obviously stupid things as well because I don't 
 have a good touch to C. But in any case it runs and using the same algorithm it solves the same 10k
-sudokus in about 5 seconds - so an order of magnitude improvement right off the bat. 
+sudokus correctly in about 5 seconds - so an order of magnitude improvement right off the bat. 
 
 |              | s/Sudoku | 10k Sudokus |
 |--------------|----------|-------------|
@@ -92,7 +96,7 @@ sudokus in about 5 seconds - so an order of magnitude improvement right off the 
 | Naive C      | 5.4e-04  | 5.2s        |
 |              |          |             |
 
-So C 1, Python 0 at this point. Let's see how we could start improving the Python version a bit.
+So C-1, Python-0 at this point. Let's see how we could start improving the Python version a bit.
 
 
 ### Round 1.5 - OOP solution
@@ -102,7 +106,7 @@ or extend previous versions. Shouldn't we maybe do this in a more Object Oriente
 It should surely make this nice in the long run, but doesn't OOP create extra baggage that will slow
 everything down? Let's test this!
 
-So in `./src/OOP_sudoku.py` we hate the very same solver as before, but in as a Sudoku Solving Object. We run the results again and what we see is:
+So in `./src/OOP_sudoku.py` we have the very same solver as before, but in as a Sudoku Solving Object. We run the results again and what we see is:
 
 |              | s/Sudoku | 10k Sudokus |
 |--------------|----------|-------------|
@@ -115,7 +119,9 @@ here. (I wouldn't be surprised if the answer has something to do with "optimizin
 
 ### Round 2 - Improved Naive Python
 
-Let's start small before even trying to bring out the big guns. 
+Let's start small before even trying to bring out the big guns. We take the OOP solver and try and see
+if there is anything to optimize along the lines of "iterating over (long) lists is slow, dicts and other
+hash-table based things are fast".
 
 
 #### Analysis
@@ -125,7 +131,7 @@ running the benchmark for that solver under cProfile:
 
 ```python -m cProfile -o OOP_solver.prof benchmark.py```
 
-The results are kinda long, but let's look at the top time spenders based both on *cumtime* which counts even when the given function has called another function
+The results are kinda long, but let's look at the top time spenders based both on *cumulative time* which counts even when the given function has called another function
 (and waiting for its results) and on *total time* which excludes time in sub-functions. The commands we run look like this:
 
 ```
@@ -246,7 +252,7 @@ method `__str__` which is used in the copying of a sudoku.
 The built-in `sum` method is also used only in methods listed above, together with another
 static method called `p_array_to_num` which has also found its way to the top 30 of both lists.
 
-So looking how these different subparts consume our CPU time, we note that there is actually a lot to improve. For example, looking at our `extract_exclusions` method which holds top rank in both total and cumulative times, we see that we are using the `sum` only to detect if a given 
+So looking how these different subparts consume our CPU time, we note that there might be chances to improve. For example, looking at our `extract_exclusions` method which holds top rank in both total and cumulative times, we see that we are using the `sum` only to detect if a given 
 possibility array is already completely determined. And in fact, most of the uses of `sum`
 are only used to figure out if a given probability array has only a single '1' in it. This seeems
 like an overkill.
@@ -289,11 +295,128 @@ So with all that work we shaved about four percents off our running time. cProfi
 ```
 
 So one of the big differences is that we pushed the 17 or so seconds used by `sum` to the
-`p_array_to_num` function here.
+`p_array_to_num` function here. So I guess the lesson here is that `sum(short_list) == 1` is also very fast?
 
 
 ### Round 3 - Numpy
 
 So, Sudoku is pretty much a glorified matrix, and numpy is good with matrices.
-This should be a no-brainer.
+This should be a no-brainer. In `./src/numpy_sudoku.py` we have the OOP solver rewritten in such
+a way that the sudoku is not a 3-dimensional list but a 3-dimensional numpy-integer array. 
 
+|              | s/Sudoku | 10k Sudokus |
+|--------------|----------|-------------|
+| Naive Python | 5.1e-03  | 51s         |
+| Naive C      | 5.4e-04  | 5.2s        |
+| OOP Python   | 4.9e-03  | 49s         |
+| Improved OOP Python | 4.7e-03 | 47s |
+| First numpy solver | 3.3e-02 | 330s |
+
+So the first attempt to numpy solve this is that we spend an order of magnitude more solving it. 
+This is pretty much the opposite of what I wanted. Let's fire up the good old cProfile to see
+what is going on.
+
+
+From `numpy_solver.prof`
+```
+Tue Mar  7 11:28:23 2023    numpy_solver.prof
+
+         456300559 function calls (456284372 primitive calls) in 515.038 seconds
+
+   Ordered by: internal time
+   List reduced from 1230 to 20 due to restriction <20>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+ 28669199   65.544    0.000   65.544    0.000 {method 'reduce' of 'numpy.ufunc' objects}
+    84712   53.859    0.001  395.698    0.005 numpy_sudoku.py:159(reduce_possibilities)
+  6406959   52.711    0.000   67.175    0.000 function_base.py:5054(delete)
+  8694183   38.006    0.000  217.958    0.000 numpy_sudoku.py:60(get_fixed_projection_array)
+ 50766043   36.277    0.000  240.813    0.000 {built-in method numpy.core._multiarray_umath.implement_array_function}
+ 19861988   26.811    0.000   87.349    0.000 fromnumeric.py:69(_wrapreduction)
+  8807211   22.568    0.000   56.763    0.000 numpy_sudoku.py:20(p_array_to_num)
+ 17490052   20.292    0.000  102.563    0.000 fromnumeric.py:2188(sum)
+  2898061   17.290    0.000   23.512    0.000 numpy_sudoku.py:110(block)
+ 17490052   13.594    0.000  128.313    0.000 <__array_function__ internals>:177(sum)
+  6406959   10.396    0.000  252.591    0.000 numpy_sudoku.py:53(extract_exclusions)
+  2135653   10.322    0.000   10.322    0.000 numpy_sudoku.py:198(<listcomp>)
+  8694183   10.192    0.000   10.192    0.000 {method 'take' of 'numpy.ndarray' objects}
+  ```
+
+```
+Tue Mar  7 11:28:23 2023    numpy_solver.prof
+
+         456300559 function calls (456284372 primitive calls) in 515.038 seconds
+
+   Ordered by: cumulative time
+   List reduced from 1230 to 30 due to restriction <30>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+    141/1    0.000    0.000  515.038  515.038 {built-in method builtins.exec}
+        1    0.000    0.000  515.038  515.038 benchmark.py:1(<module>)
+        1    0.048    0.048  514.884  514.884 benchmark.py:20(run_benchmark)
+    10000    0.048    0.000  513.466    0.051 numpy_sudoku.py:5(read_and_solve_sudoku_from_string)
+24019/10000    0.216    0.000  500.796    0.050 numpy_sudoku.py:77(recursive_solver)
+    84712   53.859    0.001  395.698    0.005 numpy_sudoku.py:159(reduce_possibilities)
+  2135653   10.143    0.000  294.213    0.000 numpy_sudoku.py:185(get_simple_mask)
+  6406959   10.396    0.000  252.591    0.000 numpy_sudoku.py:53(extract_exclusions)
+ 50766043   36.277    0.000  240.813    0.000 {built-in method numpy.core._multiarray_umath.implement_array_function}
+  8694183   38.006    0.000  217.958    0.000 numpy_sudoku.py:60(get_fixed_projection_array)
+ 17490052   13.594    0.000  128.313    0.000 <__array_function__ internals>:177(sum)
+ 17490052   20.292    0.000  102.563    0.000 fromnumeric.py:2188(sum)
+ 19861988   26.811    0.000   87.349    0.000 fromnumeric.py:69(_wrapreduction)
+    84712    2.751    0.000   86.997    0.001 numpy_sudoku.py:124(still_solvable)
+  6406959    5.251    0.000   78.532    0.000 <__array_function__ internals>:177(delete)
+  2287224    6.429    0.000   75.701    0.000 numpy_sudoku.py:47(collision_in_collection)
+  6406959   52.711    0.000   67.175    0.000 function_base.py:5054(delete)
+ 28669199   65.544    0.000   65.544    0.000 {method 'reduce' of 'numpy.ufunc' objects}
+  8807211   22.568    0.000   56.763    0.000 numpy_sudoku.py:20(p_array_to_num)
+  8694183    6.475    0.000   36.872    0.000 <__array_function__ internals>:177(take)
+ 14855826    9.852    0.000   25.918    0.000 <__array_function__ internals>:177(where)
+
+ ```
+We see especially from the total time calculations that we are spending a lot of time doing numpy-internal methods like `reduce`, `delete` and `implement_array_function`. My very non-expert feeling here is that we are paying a lot for the overhead of the numpy machiner that allows us to make really fast computations for large dimensional array linear algebra calculations? So my current guess is that numpy overhead is killing our speed improvements.
+
+
+ Note that in this line:
+ ```
+ ncalls         tottime  percall  cumtime    percall filename:lineno(function)
+ 24019/10000    0.216    0.000    500.796    0.050   numpy_sudoku.py:77(recursive_solver)
+ ```
+we can easily see from `ncalls` that the main recursive solver was called 10k times at the outset, 
+and then 24k times internally. This gives not only an average recursion depth, but seeing that this
+number is same for all the different versions of Python sudoku solvers we've used, we have strong
+evidence that they are using essentially the same recursive algorithm with same recursion depths.
+So the problem with the numpy version is not some subtle mistake about the recursive algo not exiting early enough, but just about the numpy version not being faster. Maybe the library that is built to handle 1 000 000 -dimensional float arrays and matrix multiplications of similar dimensions has some overhead when used to handle a 9x9x9 matrix of ones and zeroes? Who knew! (Option two: I'm doing something stupid with numpy here. At some point I'll go find numpy-based sudoku solvers of other people and see how they did it.)
+
+## Interlude - What did we learn here?
+
+> Premature optimization is the root of all evil.
+
+So, before actually trying to do this, my knee-jerk reaction would have been
+to do this with numpy since numpy is fast with matrices. Turns out that that would have been a bad idea.
+
+## Chapter 2 - Using C within Python
+
+If you can't beat them, join them! Next we'll try and see how to use the superiorly fast C in Python versions.
+The benchmarking has seen two ways of invoking the C-code, both in the `./src/CLI_C_caller.py` file.
+One of them passes the C-code sudokus as cli parameters and scrapes the results, the others
+passes the test data filepath and the C-function knows how to read that. With calling C via
+command line we are losing a lot of the benefits from C:
+
+|              | s/Sudoku | 10k Sudokus |
+|--------------|----------|-------------|
+| Naive Python | 5.1e-03  | 51s         |
+| C - CSV     | 5.4e-04  | 24s        |
+| C - line-by-line   | 2.4e-03  | 49s  |
+
+
+
+
+
+**TO APPEAR**
+
+## Interlude - What did we learn?
+
+## Chapter 3 - How did others do it?
+
+## Epilogue - What did we learn

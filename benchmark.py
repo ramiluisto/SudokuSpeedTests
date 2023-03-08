@@ -61,8 +61,8 @@ def run_C_benchmark_wrapper(title):
 
 if __name__ == "__main__":
     # run_benchmark(naive_solver, "Naive solver")
-    # run_benchmark(oop_solver, "OOP solver")
-    # run_benchmark(convoluted_C_solver, "Convoluted C-solver")
-    # run_C_benchmark_wrapper("Wrapped C-Benchmark tool")
+    run_benchmark(oop_solver, "OOP solver")
+    run_benchmark(convoluted_C_solver, "Convoluted C-solver")
+    run_C_benchmark_wrapper("Wrapped C-Benchmark tool")
     # run_benchmark(improved_oop_solver, "Improved OOP solver")
-    run_benchmark(numpy_solver, "Numpy solver")
+    # run_benchmark(numpy_solver, "Numpy solver")

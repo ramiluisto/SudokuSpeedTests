@@ -1,4 +1,4 @@
-# My personal speed analysis repo
+# My personal C vs Python speed analysis repo
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [Test coverage: full](https://img.shields.io/badge/coverage-100%25-green)
 
@@ -8,10 +8,9 @@ Python dev** can achieve by going from 'naive Python' to using either more
 pythonic tools, using C-powered libraries like numpy, or by at the extreme
 using straight up C-code. The differences are benchmarked with a simple recursive Sudoku solver.
 
-## Introduction
-
-Here I'm describing some general ideas. If you just wanna get started and see
-the various benchmarks jump to the section ('Getting Started').
+If you want to read of my (mis)adventures in this in a more verbose form, 
+turn to reading `ProgressDescription.md` which is
+a more diary-like description of what I've been doing.
 
 ### Why?
 
@@ -25,14 +24,26 @@ C developers.
 
 ### How?
 
-We're gonna look at a Sudoku solver.
-- Custom made
-- Recursive
-- Too easy for numpy?
+We're gonna look at a Sudoku solver. Right now there are the following Python versions (in the `./src`-folder):
+- Simple naive solver (`naive_sudoku_solver.py`)
+- OOP version of the naive solver (`OOP_sudoku.py`)
+- Improved/optimized OOP version of the OOP solver (`OOP_sudoku_improved.py`)
+- Numpy-based version of the solver (`numpy_sudoku.py`)
+
+Besides these, we have a C-implementation (`./C-version/sudoku_solver.c`) which accepts sudokus either via .csv file addressess or cli input strings. Currently the only way to call this from Python
+is via the naive version of using Python to run bash commands, see `./src/CLI_C_caller.py`. 
 
 
-## Getting started
+**Still in progress** 
+- Version of the C-solver which allows us to call it as a total
+or some of its subparts as Python packages.
+- Cython implementation of the OOP solver.
 
+
+## Getting started running this yourself
+
+To run the more naive C-approaches, you'll probably have to run this on Linux as the 
+simplest Python C-utilization just runs bash commands of the type `"./C-version/a.out -r {input_sudoku} -S"`. For these to work, run `gcc sudoku_solver.c` in the folder `./C-version`. (I am very far from a C-developer, so caveats with all my advice in this.)
 
 ### Fast start:
 ```

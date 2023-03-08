@@ -53,7 +53,7 @@ class Sudoku:
 
             num = cls.p_array_to_num(possibility)
             if num >= 1:
-                exclusion_mask[num-1] = 1
+                exclusion_mask[num - 1] = 1
 
         return exclusion_mask
 
@@ -66,7 +66,6 @@ class Sudoku:
             value = int(char)
 
             p_grid[row][col] = cls.num_to_p_array(value)
-
 
         return p_grid
 
@@ -164,7 +163,10 @@ class Sudoku:
             if collision:
                 return False
 
-        return all( (self.sudoku[i // 9][i % 9]) != (0, 0, 0, 0, 0, 0, 0, 0, 0) for i in range(81))
+        return all(
+            (self.sudoku[i // 9][i % 9]) != (0, 0, 0, 0, 0, 0, 0, 0, 0)
+            for i in range(81)
+        )
 
     def set_cell_of_sudoku(self, cell_idx, fixed_number):
         row_idx = cell_idx // 9

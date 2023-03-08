@@ -135,11 +135,11 @@ def test_collision_in_collection(simple_sudoku_object):
 def test_extract_exclusions(simple_sudoku_object):
     possibility_grid = simple_sudoku_object.sudoku[0]
     result = simple_sudoku_object.extract_exclusions(0, possibility_grid)
-    assert result == [0, 1, 0, 0, 1, 1, 0, 1, 1]
+    assert np.all(result == np.array([0, 1, 0, 0, 1, 1, 0, 1, 1]))
 
     possibility_grid = simple_sudoku_object.sudoku[3]
     result = simple_sudoku_object.extract_exclusions(8, possibility_grid)
-    assert result == [0, 1, 0, 1, 1, 0, 0, 0, 1]
+    assert np.all(result == np.array([0, 1, 0, 1, 1, 0, 0, 0, 1]))
 
 
 def test_get_simple_mask(simple_sudoku_object):
@@ -154,9 +154,11 @@ def test_get_simple_mask(simple_sudoku_object):
 
 
 def test_reduce_possibilities(simple_sudoku_object):
-    assert simple_sudoku_object.sudoku[2][2] == tuple([1] * 9)
+    assert np.all(simple_sudoku_object.sudoku[2][2] == np.ones(9))
     one_change = simple_sudoku_object.reduce_possibilities()
-    assert simple_sudoku_object.sudoku[2][2] == tuple([0, 1, 0, 0, 0, 0, 0, 0, 0])
+    assert np.all(
+        simple_sudoku_object.sudoku[2][2] == np.array([0, 1, 0, 0, 0, 0, 0, 0, 0])
+    )
     assert one_change
 
     second_change = simple_sudoku_object.reduce_possibilities()
@@ -197,20 +199,22 @@ def test_create_copy_of_sudoku(simple_sudoku_object):
 
     assert id(copied_sudoku) != id(simple_sudoku_object)
 
-    simple_sudoku_object.sudoku[0][0] = tuple(range(9))
-    assert copied_sudoku.sudoku[0][0][0] != tuple(range(9))
+    simple_sudoku_object.sudoku[0][0] = np.array(range(9))
+    assert np.any(copied_sudoku.sudoku[0][0][0] != np.array(range(9)))
 
 
 def test_import_p_grid(simple_sudoku_object):
     copied_sudoku = simple_sudoku_object.copy()
-    copied_sudoku.sudoku[0][0] = (5, 0, 0, 0, 0, 0, 0, 0, 0)
+    copied_sudoku.sudoku[0][0] = np.array((5, 0, 0, 0, 0, 0, 0, 0, 0))
 
     id_before = id(simple_sudoku_object)
     simple_sudoku_object.import_p_grid(copied_sudoku)
     assert id(simple_sudoku_object) == id_before
     assert id(copied_sudoku) != id_before
     assert id(copied_sudoku) != id(simple_sudoku_object)
-    assert simple_sudoku_object.sudoku[0][0] == (5, 0, 0, 0, 0, 0, 0, 0, 0)
+    assert np.all(
+        simple_sudoku_object.sudoku[0][0] == np.array((5, 0, 0, 0, 0, 0, 0, 0, 0))
+    )
 
 
 def test_recursive_solver(simple_sudoku_object, hard_sudoku_object):

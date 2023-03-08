@@ -23,7 +23,7 @@ class Sudoku:
             return 1 + np.where(p_array == 1)[0][0]
         else:
             return 0
-        
+
     @staticmethod
     def num_to_p_array(num: int) -> np.array:
         if num == 0:
@@ -32,7 +32,7 @@ class Sudoku:
             p_array = np.zeros(9, dtype=np.int8)
             p_array[num - 1] = 1
 
-        return p_array        
+        return p_array
 
     @classmethod
     def convert_sudoku_string_to_p_grid(cls, sudoku_string: str) -> np.array:
@@ -45,24 +45,24 @@ class Sudoku:
         return sudoku
 
     @classmethod
-    def collision_in_collection(cls, collection : np.array) -> bool:
+    def collision_in_collection(cls, collection: np.array) -> bool:
         collisions = cls.get_fixed_projection_array(collection)
 
         return np.any(collisions > 1)
 
     @classmethod
     def extract_exclusions(cls, exclusion_idx, possibilities):
-        collection = np.delete(possibilities, [exclusion_idx], axis = 0)
+        collection = np.delete(possibilities, [exclusion_idx], axis=0)
         exclusion_mask = cls.get_fixed_projection_array(collection)
 
         return exclusion_mask
 
     @staticmethod
-    def get_fixed_projection_array(collection : np.array) -> np.array:
-        summed_collection = np.sum(collection, axis = -1)
+    def get_fixed_projection_array(collection: np.array) -> np.array:
+        summed_collection = np.sum(collection, axis=-1)
         fixed_elts = np.where(summed_collection == 1)[0]
-        fixed_p_arrays = np.take(collection, fixed_elts, axis = 0)
-        projection_array = np.sum(fixed_p_arrays, axis = 0)
+        fixed_p_arrays = np.take(collection, fixed_elts, axis=0)
+        projection_array = np.sum(fixed_p_arrays, axis=0)
 
         return projection_array
 
@@ -116,10 +116,10 @@ class Sudoku:
 
     @property
     def first_unsolved_cell_index(self):
-        y, x = np.where( np.sum(self.sudoku, axis=2) > 1 )
+        y, x = np.where(np.sum(self.sudoku, axis=2) > 1)
         if len(x) == 0:
             return -1
-        return 9*y[0] + x[0]
+        return 9 * y[0] + x[0]
 
     @property
     def still_solvable(self):
@@ -141,7 +141,7 @@ class Sudoku:
             if collision:
                 return False
 
-        return np.all( np.sum(self.sudoku, axis=2) >= 1 )
+        return np.all(np.sum(self.sudoku, axis=2) >= 1)
 
     def set_cell_of_sudoku(self, cell_idx, fixed_number):
         row_idx = cell_idx // 9

@@ -1,6 +1,6 @@
 # My personal C vs Python speed analysis repo
 
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [Test coverage: full](https://img.shields.io/badge/coverage-100%25-green)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 
 The goal of this repo is to study the speed increases that **I as a particular 

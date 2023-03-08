@@ -40,7 +40,7 @@ or some of its subparts as Python packages.
 - Cython implementation of the OOP solver.
 
 
-## Getting started running this yourself
+## Getting started
 
 To run the more naive C-approaches, you'll probably have to run this on Linux as the 
 simplest Python C-utilization just runs bash commands of the type `"./C-version/a.out -r {input_sudoku} -S"`. For these to work, run `gcc sudoku_solver.c` in the folder `./C-version`. (I am very far from a C-developer, so caveats with all my advice in this.)
@@ -53,15 +53,24 @@ pip install requirements.txt
 python benchmark.py
 ```
 
-### Exploratory start:
+### Testing
 
+For Python:
 ```
-conda create --name SudokuSpeedExploratory python=3.10
-conda activate SudokuSpeedExploratory
-pip install requirements.txt
+coverage run -m pytest
+coverage report -m
 ```
-Then open the `Exploration.ipynb` -notebook and read on.
+Currently all python tests have 100% coverage.
 
+For C-code, go to folder `./C-version`, (compile) and run the result with
+option `-t`, e.g.:
+``` 
+gcc sudoku_solver.c
+./a.out -t
+```
+If this doesn't crash, then probably tests are okay. The tests here are 
+more troubleshoot-tests than TDD-tests, and can be turned on or off
+by commenting lines in the C source code.
 
 # Todo / Ideas
 

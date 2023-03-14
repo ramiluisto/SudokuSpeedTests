@@ -399,23 +399,79 @@ to do this with numpy since numpy is fast with matrices. Turns out that that wou
 
 If you can't beat them, join them! Next we'll try and see how to use the superiorly fast C in Python versions.
 The benchmarking has seen two ways of invoking the C-code, both in the `./src/CLI_C_caller.py` file.
-One of them passes the C-code sudokus as cli parameters and scrapes the results, the others
-passes the test data filepath and the C-function knows how to read that. With calling C via
+One of them passes the C-code sudokus as cli parameters and scrapes the results:
+```python
+def read_and_solve_sudoku_from_string(input_sudoku: str) -> str:
+    stream = os.popen(f"./C-version/a.out -r {input_sudoku} -S")
+    output = stream.read()
+    return output.strip("\n")
+```
+the othe passes the test data filepath to the C-function who knows how to read that:
+```python
+def run_C_benchmark(test_data) -> str:
+    stream = os.popen(f'./C-version/a.out -B "{test_data}"')
+    output = stream.read()
+    return output
+```
+
+With calling C via
 command line we are losing a lot of the benefits from C:
 
 |              | s/Sudoku | 10k Sudokus |
 |--------------|----------|-------------|
 | Naive Python | 5.1e-03  | 51s         |
-| C - CSV     | 5.4e-04  | 24s        |
+| C - CSV     | 5.4e-04  | 5.7s        |
 | C - line-by-line   | 2.4e-03  | 49s  |
 
 
+So clearly the way to go is to build the C-system as something that we can call directly! After studying the [Real Python tutorial](https://realpython.com/build-python-c-extension-module/) on the topic, it was almost easy to package the C-code as a Python package. As a caveat to those trying to repeat this: you're not supposed to `gcc sudoku_solver_module.c`, it won't work and you'll spend hours trying to troubleshoot a wrong thing.
 
+Anyway. `./C-version/sudoku_solver_module.c` contains the module that can be turned into a Python package called `RamiSudoku`. To do this, **after activating your virtual environment**,
+run `python setup.py install` in the folder `./C-version`.
+
+|              | s/Sudoku | 10k Sudokus |
+|--------------|----------|-------------|
+| Naive Python | 5.3e-03  | 53s         |
+| C - CSV      | 5.7e-04  | 5.7s        |
+| C - line-by-line   | 2.4e-03  | 24s  |
+| C based Python package | 1.1e-04 | 1.1s |
+
+So, somewhat surprisingly, the Python-packaged version
+is **five times faster** than my naive C. I'm guessing here
+that the Python file reader was written by an actually
+competent C-developer, unlike my version of getting the test and comparison
+data from the csv. 
+
+### Python 3.11
+
+Speaking of competent developers, the word on the street is that Python 3.11
+can provide considerable speed improvements compared to earlier versions. 
+Let's run the benchmarks again but compare to Python 3.11 when suitable!
+
+|              |  10k Sudokus w/ 3.10 |  10k Sudokus w/ 3.11 | Speed increase |
+|--------------|-------------|-------------|-------|
+| Naive Python |  53s         | 42s | 23% |
+| OOP Python   |  50s         | 40s | 25% |
+| Improved OOP Python | 48s | 37s | 30% |
+| First numpy solver |  350s |  320s  | 9% |
+| C - CSV      |  5.7s        | 5.4s | 5% |
+| C - line-by-line   | 24s  | 24s | 0% |
+| C based Python package |  1.1s | 1.1s |0% |
+
+Not bad, 25-ish percent improvments on the more Python-heavy solutions,
+and even a 5% improvement on the wrapped C-benchmark.
+
+
+## Interlude - What did we learn?
+
+We learned a few things:
+1. C is faster than Python **when in the hands of a competent dev**. My Python-packaged C-solver is faster than my raw C-solver, which clearly indicates
+that I am doing something silly in my C-version.
+2. Read tutorials through and don't start to solo around. But if you don't and do, then when running to weird error messages, try to go back to patiently following the tutorial.
+3. Don't guess, always try out and test. I would not have guessed Numpy-version to be so slow or the C-extension module to be faster than my naive C-version.
 
 
 **TO APPEAR**
-
-## Interlude - What did we learn?
 
 ## Chapter 3 - How did others do it?
 

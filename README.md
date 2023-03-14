@@ -45,11 +45,17 @@ or some of its subparts as Python packages.
 To run the more naive C-approaches, you'll probably have to run this on Linux as the 
 simplest Python C-utilization just runs bash commands of the type `"./C-version/a.out -r {input_sudoku} -S"`. For these to work, run `gcc sudoku_solver.c` in the folder `./C-version`. (I am very far from a C-developer, so caveats with all my advice in this.)
 
+To get the Python C-extension moduler running, **after activating your virtual environment**,
+run `python setup.py install` in the folder `./C-version`.
+
 ### Fast start:
 ```
 conda create --name SudokuSpeedBenchmark python=3.10
 conda activate SudokuSpeedBenchmark
 pip install requirements.txt
+cd C-version
+python setup.py install
+cd ..
 python benchmark.py
 ```
 

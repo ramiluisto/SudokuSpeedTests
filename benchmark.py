@@ -13,6 +13,12 @@ from src.numpy_sudoku import read_and_solve_sudoku_from_string as numpy_solver
 from src.CLI_C_caller import read_and_solve_sudoku_from_string as convoluted_C_solver
 from src.CLI_C_caller import run_C_benchmark
 
+try:
+    from RamiSudoku import sudoku_solver as modulated_C_solver
+except ImportError as e:
+    modulated_C_solver = None
+    print(f"Failed to import sudoku C-module due to {e}.")
+
 with open("./data/10k_sudokus.csv", "r") as fp:
     benchmark_data_10k = fp.readlines()
 
@@ -21,22 +27,25 @@ def run_benchmark(algo_to_use, title, data=benchmark_data_10k):
     print(80 * "*")
     print(f"Running benchmark for {title}: ")
 
-    tick = time.time()
-    success_count = 0
-    for line in tqdm(data):
-        puzzle, solved = line.strip("\n ").split(",")
-        result = algo_to_use(puzzle)
-        if result == solved:
-            success_count += 1
-    tock = time.time()
+    try:
+        tick = time.time()
+        success_count = 0
+        for line in tqdm(data):
+            puzzle, solved = line.strip("\n ").split(",")
+            result = algo_to_use(puzzle)
+            if result == solved:
+                success_count += 1
+        tock = time.time()
 
-    print(f"{title} done!")
-    print(
-        f"Success count: {success_count:>8}/{len(data):>8} ({success_count/len(data):>3.1%})"
-    )
-    print(
-        f"Time: {tock-tick:>8.2} seconds for {len(data)} data. ({(tock-tick)/len(data):>1.1e} secs per sudoku)"
-    )
+        print(f"{title} done!")
+        print(
+            f"Success count: {success_count:>8}/{len(data):>8} ({success_count/len(data):>3.1%})"
+        )
+        print(
+            f"Time: {tock-tick:>8.2} seconds for {len(data)} data. ({(tock-tick)/len(data):>1.1e} secs per sudoku)"
+        )
+    except Exception as e:
+        print(f"\nFailed in running benchmark for {title}.")
 
 
 def run_C_benchmark_wrapper(title):
@@ -60,9 +69,10 @@ def run_C_benchmark_wrapper(title):
 
 
 if __name__ == "__main__":
-    # run_benchmark(naive_solver, "Naive solver")
+    run_benchmark(naive_solver, "Naive solver")
     run_benchmark(oop_solver, "OOP solver")
     run_benchmark(convoluted_C_solver, "Convoluted C-solver")
     run_C_benchmark_wrapper("Wrapped C-Benchmark tool")
-    # run_benchmark(improved_oop_solver, "Improved OOP solver")
-    # run_benchmark(numpy_solver, "Numpy solver")
+    run_benchmark(improved_oop_solver, "Improved OOP solver")
+    #run_benchmark(numpy_solver, "Numpy solver")
+    run_benchmark(modulated_C_solver, "Modulated C-solver")

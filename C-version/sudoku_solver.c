@@ -185,7 +185,7 @@ void get_total_exclusions(char values_to_exclude[9], char cell_idx, p_grid sudok
     // block it is the rightmost one of the middle row, and it's index there is 
     // thus 5.
     char block_exclusion_index =  3*((cell_idx/9) % 3) + ((cell_idx%9) % 3);
-    get_single_exclusion_data(exclusion_counts, cell_idx%9, sub);
+    get_single_exclusion_data(exclusion_counts, block_exclusion_index, sub);
     //printf("Exclusion mask after blo: ");
     //for(int j=0; j<P_RANGE; j++) printf("%d%s", exclusion_counts[j], (j==8) ? "\n" : " ");
 

@@ -9,7 +9,7 @@ pythonic tools, using C-powered libraries like numpy, or by at the extreme
 using straight up C-code. The differences are benchmarked with a simple recursive Sudoku solver.
 
 If you want to read of my (mis)adventures in this in a more verbose form, 
-turn to reading `ProgressDescription.md` which is
+turn to reading [`ProgressDescription.md`](ProgressDescription.md) which is
 a more diary-like description of what I've been doing.
 
 ### Why?

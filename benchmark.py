@@ -74,5 +74,5 @@ if __name__ == "__main__":
     run_benchmark(convoluted_C_solver, "Convoluted C-solver")
     run_C_benchmark_wrapper("Wrapped C-Benchmark tool")
     run_benchmark(improved_oop_solver, "Improved OOP solver")
-    #run_benchmark(numpy_solver, "Numpy solver")
+    # run_benchmark(numpy_solver, "Numpy solver")
     run_benchmark(modulated_C_solver, "Modulated C-solver")

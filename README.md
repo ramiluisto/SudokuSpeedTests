@@ -78,13 +78,9 @@ If this doesn't crash, then probably tests are okay. The tests here are
 more troubleshoot-tests than TDD-tests, and can be turned on or off
 by commenting lines in the C source code.
 
-# Todo / Ideas
+# Todo / Ideas / Notes
 
-Create a dict with precalculated block indeces?
-- How about a dict that contains the "array_to_num" (and num_to_array) conversions?
+- Should not have imported fixtures in many places, `conftest.py` should be made instead.
+- Test ideology should probably move from **all** of the unit tests to more workflow-based thing. Especially as with coverage we can make sure that all edge cases are covered.
+- Could the `hypothesis` library be used here?
 
-Run better diagnostics on what takes most time
-
-Check if OOP affects speed -- recurse the whole object.
-
-Make a separate blog.md

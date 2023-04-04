@@ -475,4 +475,7 @@ that I am doing something silly in my C-version.
 
 ## Chapter 3 - How did others do it?
 
+
+
+
 ## Epilogue - What did we learn
